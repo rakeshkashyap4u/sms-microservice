@@ -37,14 +37,15 @@ import com.rakesh.sms.beans.Callback;
 import com.rakesh.sms.beans.LongMessageParameters;
 import com.rakesh.sms.beans.Message;
 import com.rakesh.sms.beans.SessionParameters;
+import com.rakesh.sms.bo.GatewayBo;
 import com.rakesh.sms.bo.ReportsBo;
-import com.rakesh.sms.cdr.CdrCreator;
+
 import com.rakesh.sms.cdr.SmsCdrBean;
 import com.rakesh.sms.controller.SMSController;
-import com.bng.sms.queue.QueueManager;
 import com.rakesh.sms.entity.CallbackDetails;
 import com.rakesh.sms.entity.SMSCConfigs;
 import com.rakesh.sms.entity.SmsLogs;
+import com.rakesh.sms.queue.QueueManager;
 import com.rakesh.sms.util.AppContext;
 import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;
@@ -62,6 +63,8 @@ public class ESME implements Gateway {
 	private boolean connected;
 	private Object tpsLock;
 	private String circle;
+	
+	
 
 	public ESME() {
 		/**
@@ -87,7 +90,7 @@ public class ESME implements Gateway {
 
 			this.configDetails = details;
 			this.circle = details.getCircle();
-			ESME.isJsonCDR = CdrCreator.isJsonCDR();
+			//ESME.isJsonCDR = CdrCreator.isJsonCDR();
 			this.reportsbo = (ReportsBo) AppContext.getBean("reportsBo");
 			Logger.sysLog(LogValues.debug, this.getClass().getName(),
 					" SMPP Server Configuration Details ::  Circle: " + details.getCircle() + " | UserID: "
@@ -816,7 +819,7 @@ public class ESME implements Gateway {
 				} // End Of Connection Check
 
 				if (this.response != null && this.response.length() != 0) {
-					CdrCreator.saveAsXML(cdr);
+					//CdrCreator.saveAsXML(cdr);
 				}
 
 				if (this.response == null || this.response.toLowerCase().contains("failure")) 
@@ -944,7 +947,7 @@ public class ESME implements Gateway {
 				segmentsCdr.setResponsetime(CoreUtils.getCurrentTimeStamp());
 				segmentsCdr.setMessageId(msgId);
 				segmentsCdr.setStatus("Success");
-				CdrCreator.saveAsXML(segmentsCdr);
+				//CdrCreator.saveAsXML(segmentsCdr);
 
 			} catch (Exception e) {
 				Logger.sysLog(LogValues.error, this.getClass().getName(),

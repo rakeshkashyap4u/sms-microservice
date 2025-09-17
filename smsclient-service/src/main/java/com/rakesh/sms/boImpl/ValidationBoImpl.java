@@ -3,6 +3,8 @@ package com.rakesh.sms.boImpl;
 import java.util.List;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.rakesh.sms.beans.MODetails;
 import com.rakesh.sms.bo.ValidationBo;
@@ -14,8 +16,10 @@ import com.rakesh.sms.entity.MtResponse;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
 
+@Service
 public class ValidationBoImpl implements ValidationBo {
 
+	@Autowired
 	private ValidationDao validationDao;
 
 	public void setValidationDao(ValidationDao validationDao) {

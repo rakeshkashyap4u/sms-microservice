@@ -9,50 +9,54 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.jms.Connection;
-import javax.jms.MessageConsumer;
-import javax.jms.Session;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jms.annotation.JmsListener;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rakesh.sms.beans.Header;
 import com.rakesh.sms.beans.Message;
-import com.rakesh.sms.beans.RegistrationRequest;
 import com.rakesh.sms.beans.RequestFormat;
 import com.rakesh.sms.beans.SMSC;
 import com.rakesh.sms.bo.GatewayBo;
-import com.rakesh.sms.cdr.CdrCreator;
 import com.rakesh.sms.cdr.SmsCdrBean;
 import com.rakesh.sms.controller.SMSController;
-import com.bng.sms.queue.ActiveMQConnection;
-import com.bng.sms.queue.QueueManager;
-import com.bng.sms.queue.SmsQueue;
-import com.google.gson.Gson;
 import com.rakesh.sms.entity.SMSCConfigs;
 import com.rakesh.sms.entity.SMSCFormats;
+import com.rakesh.sms.queue.QueueManager;
+import com.rakesh.sms.queue.SmsQueue;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.Expression;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
-import com.rakesh.sms.util.SimpleParser;
-import com.rakesh.sms.util.UrlHitter;
 import com.rakesh.sms.util.XmlParser;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.jms.Connection;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.Session;
+
+
+@Component
 public class Pusher extends Thread {
 
 	private static Connection consumerConnection;
@@ -67,6 +71,10 @@ public class Pusher extends Thread {
 	private long id, smsCount;
 	private boolean push;
 	private int type;
+	
+	
+	
+	
 
 	public Pusher() {
 
@@ -89,6 +97,7 @@ public class Pusher extends Thread {
 		this.type = type;
 	}
 
+	  @Autowired
 	public void setGatewayBoImpl(GatewayBo gatewayBoImpl) {
 		Pusher.gatewayBoImpl = gatewayBoImpl;
 		Logger.sysLog(LogValues.info, Pusher.class.getName(), " SMSClient HTTP Gateway Initialized. ");
@@ -100,6 +109,98 @@ public class Pusher extends Thread {
 
 	public static String getDefaultCircle() {
 		return Pusher.defaultCircle;
+	}
+	
+	@JmsListener(destination = "smsqueue1", concurrency = "5-10")
+	public void receiveMessage(String json) throws InterruptedException, JsonMappingException, JsonProcessingException {
+	    // Update circle info
+		ObjectMapper mapper = new ObjectMapper();
+	    Message msg = mapper.readValue(json, Message.class);
+		if (msg == null) {
+            // No message available, short sleep to avoid CPU spin
+            Thread.sleep(5);
+            
+        }
+
+        String response = "";
+
+        // Check expiry
+        if (msg.isExpired()) {
+            Logger.sysLog(LogValues.info, this.getClass().getName(),
+                    "SMS EXPIRED :: " + msg.toString());
+            response = "false: SmsExpired";
+        } else {
+            Logger.sysLog(LogValues.info, this.getClass().getName(),
+                    " [" + this.id + "] SMS Popped | Remaining= " + this.smsCount);
+
+            this.updateCircle(msg);
+            Logger.sysLog(LogValues.info, this.getClass().getName(),
+                    " [" + this.id + "] Circle Updated to: " + msg.getCircle());
+
+            // Reconnect SMSC if inactive
+            if (!CoreUtils.isSMSCActive(msg.getCircle())) {
+                ReConnector connector = ReConnector.getReconnector(msg.getCircle());
+                try {
+                    connector.safeStart();
+                    Logger.sysLog(LogValues.info, this.getClass().getName(),
+                            "Waiting for SMSC [" + msg.getCircle() + "] to be Reconnected...");
+                    connector.join();
+                } catch (Exception fce) {
+                    Logger.sysLog(LogValues.error, this.getClass().getName(),
+                            fce.getMessage() + " :: Unable to connect to SMSC [" + msg.getCircle() + "]");
+                }
+            }
+
+//            // Maintain TPS
+//            while (this.checkTPS(msg) && this.tpsLock != null) {
+//                Logger.sysLog(LogValues.info, this.getClass().getName(),
+//                        " [" + this.id + "] TPS Achieved for current slot");
+//                synchronized (this.tpsLock) {
+//                    this.tpsLock.wait();
+//                }
+//                Logger.sysLog(LogValues.debug, this.getClass().getName(),
+//                        " [" + this.id + "] TPS Available");
+//            }
+
+            // Push the message
+            try {
+				response = this.push(msg, false);
+			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
+					| BadPaddingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+            this.smsCount--;
+        }
+
+        // Handle failed push / callback / retry
+        if (response.toLowerCase().startsWith("false")) {
+            SmsCdrBean cdr = CoreUtils.getSmsCDR(msg);
+            cdr.setMessageId(SMSController.DefaultMessageID);
+
+            if (response.contains(":")) {
+                response = response.replaceAll("false:", "Failure");
+                cdr.setStatus(response);
+            } else {
+                cdr.setStatus("Failure");
+            }
+
+            if (msg.isCallback()) {
+                Logger.sysLog(LogValues.info, this.getClass().getName(),
+                        " [" + this.id + "][" + msg.getRequiredMsisdn() +
+                                "] SMS Sending Failed | Sending Failure Callback...");
+                msg.getCallbackDetails().setCallbackStatus("Failure");
+                msg.getCallbackDetails().setFailureReason("Others");
+                Logger.sysLog(LogValues.info, this.getClass().getName(),
+                        "Sending callback: " + msg.toString());
+                CoreUtils.sendCallback(msg);
+            } else if (!msg.isExpired()) {
+                CoreUtils.retrySms(msg);
+            }
+
+            //////////CdrCreator.saveAsXML(cdr);
+        }
+
 	}
 
 	public static HttpGateway getHttpGateway(String circle) {
@@ -114,6 +215,9 @@ public class Pusher extends Thread {
 
 	}// End Of Method
 
+	
+	
+	
 	public static HttpGateway getRemovedHttpGateway(String circle) {
 
 		SMSC smsc = QueueManager.getRemovedSMSC(circle);
@@ -125,296 +229,289 @@ public class Pusher extends Thread {
 
 	}// End Of Method
 
+	  @PostConstruct
 	public static void init() {
 
-		try {
+//		try {
+//			
+//			try {
+//			    // Create a new connection (example for ActiveMQ)
+//				// Username and password only
+//				
+//
+//			    // Start the connection
+//			    Pusher.consumerConnection.start();
+//
+//			    // Create session
+//			    Pusher.consumerSession = Pusher.consumerConnection.createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
+//
+//			} catch (NullPointerException e) {
+//			    Logger.sysLog(LogValues.error, Pusher.class.getName(), " ERROR Creating Consumer Session ");
+//			} catch (Exception e) {
+//			    Logger.sysLog(LogValues.error, Pusher.class.getName(),
+//			            " ActiveMQ Consumer Connection Initialization ERROR \n" + Logger.getStack(e));
+//			}
+//
+//		
+//
+//		} catch (NullPointerException e) {
+//			Logger.sysLog(LogValues.error, Pusher.class.getName(), " ERROR Creating Consumer Session ");
+//		} catch (Exception e) {
+//			Logger.sysLog(LogValues.error, Pusher.class.getName(),
+//					" ActiveMQ Consumer Connection Initialization ERROR \n" + Logger.getStack(e));
+//		}
 
-			Pusher.consumerConnection = ActiveMQConnection.getNewConnection();
-			Pusher.consumerConnection.start();
-			Pusher.consumerSession = Pusher.consumerConnection.createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
+	//	Pusher.ThreadBurstTime = 1000 / QueueManager.TPS;
 
-		} catch (NullPointerException e) {
-			Logger.sysLog(LogValues.error, Pusher.class.getName(), " ERROR Creating Consumer Session ");
-		} catch (Exception e) {
-			Logger.sysLog(LogValues.error, Pusher.class.getName(),
-					" ActiveMQ Consumer Connection Initialization ERROR \n" + Logger.getStack(e));
-		}
+//		try {
+//			Pusher.WaitTime = Integer.parseInt(CoreUtils.getProperty("transactionTimer"));
+//			Pusher.WaitTime += 500; // In milliseconds
+//		} catch (Exception e) {
+//			Pusher.WaitTime = 5000;
+//		} // End Of Try Catch
 
-		Pusher.ThreadBurstTime = 1000 / QueueManager.TPS;
+		//try {
 
-		try {
-			Pusher.WaitTime = Integer.parseInt(CoreUtils.getProperty("transactionTimer"));
-			Pusher.WaitTime += 500; // In milliseconds
-		} catch (Exception e) {
-			Pusher.WaitTime = 5000;
-		} // End Of Try Catch
-
-		try {
-
-			if (QueueManager.smscList.isEmpty() || QueueManager.smscList.size() == 0) 
-			{
-
-				SMSC smsc = new SMSC();
-				SMSCConfigs config = Pusher.gatewayBoImpl.getConfigDetails();
-				config.setCircle(config.getCircle().toUpperCase().trim());
-				smsc.setConfig(config);
-				smsc.setFormat(Pusher.gatewayBoImpl.getFormatDetails(config.getCid().toString()));
-				Pusher.defaultCircle = config.getCircle();
-				Logger.sysLog(LogValues.info, Pusher.class.getName(), " Default Circle= " + Pusher.defaultCircle);
-
-				if (CoreUtils.getProtocol() == CoreEnums.Protocol.SMPP) {
-
-					ESME esme = new ESME(config);
-
-					if (esme.isConnected()) {
-						smsc.setSmppGateway(esme);
-						smsc.setHttpGateway(new HttpGateway(config.getTimeout()));
-						QueueManager.addSMSC(Pusher.defaultCircle, smsc);
-					} else {
-						Logger.sysLog(LogValues.info, Pusher.class.getName(),
-								" SMSC Connection Failed ---(Retrying)---");
-						ReConnector.reconnect(config.getCircle());
-					} // End Of Connected ESME
-
-				} else if (CoreUtils.getProtocol() == CoreEnums.Protocol.HTTP) {
-
-					smsc.setHttpGateway(new HttpGateway(config.getTimeout(), true));
-					QueueManager.addSMSC(Pusher.defaultCircle, smsc);
-
-					System.out.println("here you are now");
-
-					if (smsc.getFormat().getRegister().equals("1")) {
-
-						SMSCFormats format = smsc.getFormat();
-						RegistrationRequest request = null;
-						List<Header> headers = new ArrayList<Header>();
-
-						if (CoreUtils.getProperty("country").equalsIgnoreCase("airtel")
-								&& CoreUtils.getProperty("operator").equalsIgnoreCase("smart")) {
-							// specific header for Smart Philipines
-							String password[] = CoreUtils.generateEncryptedPassword(smsc.getConfig().getPassword())
-									.split(",");
-
-							Header header = new Header("X-WSSE",
-									"UsernameToken Username=\"" + smsc.getConfig().getUserid() + "\", PasswordDigest=\""
-											+ password[0] + "\", Nonce=\"" + password[1] + "\", Created=\""
-											+ password[2] + "\"");
-
-							Logger.sysLog(LogValues.info, Pusher.class.getName(),
-									"Adding header: " + header.toString());
-
-							headers.add(header);
-						}
-
-						/*
-						 * if (CoreUtils.getProperty("country").equalsIgnoreCase("tanz") &&
-						 * CoreUtils.getProperty("operator").equalsIgnoreCase("tigo")) { // specific
-						 * header for Tigo Tanzania
-						 * 
-						 * 
-						 * Header header = new Header("Content-Type:application/json"
-						 * 
-						 * Logger.sysLog(LogValues.info, Pusher.class.getName(), "Adding header: " +
-						 * header.toString());
-						 * 
-						 * headers.add(header); }
-						 */
-
-						if (format.getMoRegisterFormat() != null && format.getMoRegisterFormat() != "") {
-							request = (RegistrationRequest) XmlParser.parseXml(format.getMoRegisterFormat(),
-									new RegistrationRequest());
-							request.setHeaders(headers);
-							smsc.setRequestMO(request);
-							String deregisterMoUrl = smsc.getHttpGateway().registerMO(request);
-
-							if (deregisterMoUrl != null && deregisterMoUrl.length() > 0)
-								smsc.getRequestMO().setDeregistrationURL(deregisterMoUrl);
-						} else {
-							Logger.sysLog(LogValues.info, Pusher.class.getName(), "No MO Registration format defined!");
-						}
-
-						if (format.getMtRegisterFormat() != null && format.getMtRegisterFormat() != "") {
-							request = (RegistrationRequest) XmlParser.parseXml(format.getMtRegisterFormat(),
-									new RegistrationRequest());
-							request.setHeaders(headers);
-							smsc.setRequestMT(request);
-							String deregisterMtUrl = smsc.getHttpGateway().registerMT(request);
-
-							if (deregisterMtUrl != null && deregisterMtUrl.length() > 0)
-								smsc.getRequestMT().setDeregistrationURL(deregisterMtUrl);
-						} else {
-							Logger.sysLog(LogValues.info, Pusher.class.getName(), "No MT Registration format defined!");
-						}
-
-					} // End Of Registration Process
-				} else if (CoreUtils.getProtocol() == CoreEnums.Protocol.SOAP) {
-					smsc.setHttpGateway(new HttpGateway(config.getTimeout(), true));
-					QueueManager.addSMSC(Pusher.defaultCircle, smsc);
-
-					if (smsc.getFormat().getRegister().equals("1")) {
-
-						SMSCFormats format = smsc.getFormat();
-						RegistrationRequest request = null;
-
-						if (format.getMoRegisterFormat() != null && format.getMoRegisterFormat() != "") {
-							request = (RegistrationRequest) XmlParser.parseXml(format.getMoRegisterFormat(),
-									new RegistrationRequest());
-							smsc.setRequestMO(request);
-							smsc.getHttpGateway().registerMO(request);
-						} else {
-							Logger.sysLog(LogValues.info, Pusher.class.getName(), "No MO Registration format defined!");
-						}
-
-						if (format.getMtRegisterFormat() != null && format.getMtRegisterFormat() != "") {
-							request = (RegistrationRequest) XmlParser.parseXml(format.getMtRegisterFormat(),
-									new RegistrationRequest());
-							smsc.setRequestMT(request);
-							smsc.getHttpGateway().registerMT(request);
-						} else {
-							Logger.sysLog(LogValues.info, Pusher.class.getName(), "No MT Registration format defined!");
-						}
-
-					} // End Of Registration Process
-
-				} // End Of Protocol Check
-
-			} // End Of Default SMSC Loader
-
-		} catch (Exception e) {
-			Logger.sysLog(LogValues.error, Pusher.class.getName(),
-					" Default Gateway Initialization ERROR \n" + Logger.getStack(e));
-		}
+//			if (QueueManager.smscList.isEmpty() || QueueManager.smscList.size() == 0) 
+//			{
+//
+//				SMSC smsc = new SMSC();
+//				SMSCConfigs config = Pusher.gatewayBoImpl.getConfigDetails();
+//				config.setCircle(config.getCircle().toUpperCase().trim());
+//				smsc.setConfig(config);
+//				smsc.setFormat(Pusher.gatewayBoImpl.getFormatDetails(config.getCid().toString()));
+//				Pusher.defaultCircle = config.getCircle();
+//				Logger.sysLog(LogValues.info, Pusher.class.getName(), " Default Circle= " + Pusher.defaultCircle);
+//
+//				if (CoreUtils.getProtocol() == CoreEnums.Protocol.SMPP) {
+//
+//					ESME esme = new ESME(config);
+//
+//					if (esme.isConnected()) {
+//						smsc.setSmppGateway(esme);
+//						smsc.setHttpGateway(new HttpGateway(config.getTimeout()));
+//						QueueManager.addSMSC(Pusher.defaultCircle, smsc);
+//					} else {
+//						Logger.sysLog(LogValues.info, Pusher.class.getName(),
+//								" SMSC Connection Failed ---(Retrying)---");
+//						ReConnector.reconnect(config.getCircle());
+//					} // End Of Connected ESME
+//
+//				} else if (CoreUtils.getProtocol() == CoreEnums.Protocol.HTTP) {
+//
+//					smsc.setHttpGateway(new HttpGateway(config.getTimeout(), true));
+//					QueueManager.addSMSC(Pusher.defaultCircle, smsc);
+//
+//					System.out.println("here you are now");
+//
+//					if (smsc.getFormat().getRegister().equals("1")) {
+//
+//						SMSCFormats format = smsc.getFormat();
+//						RegistrationRequest request = null;
+//						List<Header> headers = new ArrayList<Header>();
+//
+//						if (CoreUtils.getProperty("country").equalsIgnoreCase("airtel")
+//								&& CoreUtils.getProperty("operator").equalsIgnoreCase("smart")) {
+//							// specific header for Smart Philipines
+//							String password[] = CoreUtils.generateEncryptedPassword(smsc.getConfig().getPassword())
+//									.split(",");
+//
+//							Header header = new Header("X-WSSE",
+//									"UsernameToken Username=\"" + smsc.getConfig().getUserid() + "\", PasswordDigest=\""
+//											+ password[0] + "\", Nonce=\"" + password[1] + "\", Created=\""
+//											+ password[2] + "\"");
+//
+//							Logger.sysLog(LogValues.info, Pusher.class.getName(),
+//									"Adding header: " + header.toString());
+//
+//							headers.add(header);
+//						}
+//
+//						/*
+//						 * if (CoreUtils.getProperty("country").equalsIgnoreCase("tanz") &&
+//						 * CoreUtils.getProperty("operator").equalsIgnoreCase("tigo")) { // specific
+//						 * header for Tigo Tanzania
+//						 * 
+//						 * 
+//						 * Header header = new Header("Content-Type:application/json"
+//						 * 
+//						 * Logger.sysLog(LogValues.info, Pusher.class.getName(), "Adding header: " +
+//						 * header.toString());
+//						 * 
+//						 * headers.add(header); }
+//						 */
+//
+//						if (format.getMoRegisterFormat() != null && format.getMoRegisterFormat() != "") {
+//							request = (RegistrationRequest) XmlParser.parseXml(format.getMoRegisterFormat(),
+//									new RegistrationRequest());
+//							request.setHeaders(headers);
+//							smsc.setRequestMO(request);
+//							String deregisterMoUrl = smsc.getHttpGateway().registerMO(request);
+//
+//							if (deregisterMoUrl != null && deregisterMoUrl.length() > 0)
+//								smsc.getRequestMO().setDeregistrationURL(deregisterMoUrl);
+//						} else {
+//							Logger.sysLog(LogValues.info, Pusher.class.getName(), "No MO Registration format defined!");
+//						}
+//
+//						if (format.getMtRegisterFormat() != null && format.getMtRegisterFormat() != "") {
+//							request = (RegistrationRequest) XmlParser.parseXml(format.getMtRegisterFormat(),
+//									new RegistrationRequest());
+//							request.setHeaders(headers);
+//							smsc.setRequestMT(request);
+//							String deregisterMtUrl = smsc.getHttpGateway().registerMT(request);
+//
+//							if (deregisterMtUrl != null && deregisterMtUrl.length() > 0)
+//								smsc.getRequestMT().setDeregistrationURL(deregisterMtUrl);
+//						} else {
+//							Logger.sysLog(LogValues.info, Pusher.class.getName(), "No MT Registration format defined!");
+//						}
+//
+//					} // End Of Registration Process
+//				} else if (CoreUtils.getProtocol() == CoreEnums.Protocol.SOAP) {
+//					smsc.setHttpGateway(new HttpGateway(config.getTimeout(), true));
+//					QueueManager.addSMSC(Pusher.defaultCircle, smsc);
+//
+//					if (smsc.getFormat().getRegister().equals("1")) {
+//
+//						SMSCFormats format = smsc.getFormat();
+//						RegistrationRequest request = null;
+//
+//						if (format.getMoRegisterFormat() != null && format.getMoRegisterFormat() != "") {
+//							request = (RegistrationRequest) XmlParser.parseXml(format.getMoRegisterFormat(),
+//									new RegistrationRequest());
+//							smsc.setRequestMO(request);
+//							smsc.getHttpGateway().registerMO(request);
+//						} else {
+//							Logger.sysLog(LogValues.info, Pusher.class.getName(), "No MO Registration format defined!");
+//						}
+//
+//						if (format.getMtRegisterFormat() != null && format.getMtRegisterFormat() != "") {
+//							request = (RegistrationRequest) XmlParser.parseXml(format.getMtRegisterFormat(),
+//									new RegistrationRequest());
+//							smsc.setRequestMT(request);
+//							smsc.getHttpGateway().registerMT(request);
+//						} else {
+//							Logger.sysLog(LogValues.info, Pusher.class.getName(), "No MT Registration format defined!");
+//						}
+//
+//					} // End Of Registration Process
+//
+//				} // End Of Protocol Check
+//
+//			} // End Of Default SMSC Loader
+//
+//		} catch (Exception e) {
+//			Logger.sysLog(LogValues.error, Pusher.class.getName(),
+//					" Default Gateway Initialization ERROR \n" + Logger.getStack(e));
+//		}
 
 	}// End Of Method
 
 	@Override
 	public void run() {
-		String response = new String("");
-		Message msg = null;
+	    Logger.sysLog(LogValues.trace, Pusher.class.getName(), "ZZZ Inside run of Pusher");
+	    System.out.println("here pusher run");
 
-		Logger.sysLog(LogValues.trace, Pusher.class.getName(), "ZZZ Inside run of pusher ");
-		try {
+	    try {
+	        while (Pusher.start) { // Outer loop for thread life
 
-			while (Pusher.start) {
+	            // Pop message from JMS queue (blocks up to 1 second)
+	            Message msg = SmsQueue.pop(consumer, this.type);
 
-				synchronized (this.lock) {
-					this.lock.wait();
-					// Logger.sysLog(LogValues.info, Pusher.class.getName(), " inside run of pusher
-					// " );
-					Logger.sysLog(LogValues.trace, Pusher.class.getName(),
-							" [" + this.push + "] pusher.push true and before pop... ");
+	            if (msg == null) {
+	                // No message available, short sleep to avoid CPU spin
+	                Thread.sleep(5);
+	                continue;
+	            }
 
-					while (this.push) {
+	            String response = "";
 
-						Logger.sysLog(LogValues.trace, Pusher.class.getName(),
-								" [" + this.push + "] pusher.push true and just before pop... ");
-						msg = SmsQueue.pop(consumer, this.type);
+	            // Check expiry
+	            if (msg.isExpired()) {
+	                Logger.sysLog(LogValues.info, this.getClass().getName(),
+	                        "SMS EXPIRED :: " + msg.toString());
+	                response = "false: SmsExpired";
+	            } else {
+	                Logger.sysLog(LogValues.info, this.getClass().getName(),
+	                        " [" + this.id + "] SMS Popped | Remaining= " + this.smsCount);
 
-						// System.out.println(" we get poped msg"+msg);
+	                this.updateCircle(msg);
+	                Logger.sysLog(LogValues.info, this.getClass().getName(),
+	                        " [" + this.id + "] Circle Updated to: " + msg.getCircle());
 
-						// System.out.println(" [" + this.push + "] pusher.push true and just before
-						// pop... ");
+	                // Reconnect SMSC if inactive
+	                if (!CoreUtils.isSMSCActive(msg.getCircle())) {
+	                    ReConnector connector = ReConnector.getReconnector(msg.getCircle());
+	                    try {
+	                        connector.safeStart();
+	                        Logger.sysLog(LogValues.info, this.getClass().getName(),
+	                                "Waiting for SMSC [" + msg.getCircle() + "] to be Reconnected...");
+	                        connector.join();
+	                    } catch (Exception fce) {
+	                        Logger.sysLog(LogValues.error, this.getClass().getName(),
+	                                fce.getMessage() + " :: Unable to connect to SMSC [" + msg.getCircle() + "]");
+	                    }
+	                }
 
-						// Logger.sysLog(LogValues.info, Pusher.class.getName(), " ["+ this.push+"]
-						// pusher.push true and just after pop..." );
-						if (msg != null && msg.isExpired()) {
-							Logger.sysLog(LogValues.info, this.getClass().getName(),
-									" SMS EXPIRED :: " + msg.toString());
-							response = "false: SmsExpired";
-						} else if (msg != null) {
+	                // Maintain TPS
+	                while (this.checkTPS(msg) && this.tpsLock != null) {
+	                    Logger.sysLog(LogValues.info, this.getClass().getName(),
+	                            " [" + this.id + "] TPS Achieved for current slot");
+	                    synchronized (this.tpsLock) {
+	                        this.tpsLock.wait();
+	                    }
+	                    Logger.sysLog(LogValues.debug, this.getClass().getName(),
+	                            " [" + this.id + "] TPS Available");
+	                }
 
-							Logger.sysLog(LogValues.info, this.getClass().getName(),
-									" [" + this.id + "]  SMS Popped |  Remaining= " + this.smsCount);
-							this.updateCircle(msg);
+	                // Push the message
+	                response = this.push(msg, false);
+	                this.smsCount--;
+	            }
 
-							Logger.sysLog(LogValues.info, this.getClass().getName(),
-									" [" + this.id + "]  Circle Updated to: " + msg.getCircle());
+	            // Handle failed push / callback / retry
+	            if (response.toLowerCase().startsWith("false")) {
+	                SmsCdrBean cdr = CoreUtils.getSmsCDR(msg);
+	                cdr.setMessageId(SMSController.DefaultMessageID);
 
-							if (CoreUtils.isSMSCActive(msg.getCircle()) == false) {
-								ReConnector connector = ReConnector.getReconnector(msg.getCircle());
-								try {
-									connector.safeStart();
-									Logger.sysLog(LogValues.info, this.getClass().getName(),
-											" Waiting for SMSC [" + msg.getCircle() + "] to be Reconnected... ");
-									connector.join();
-								} catch (Exception fce) {
-									Logger.sysLog(LogValues.error, this.getClass().getName(), fce.getMessage()
-											+ " :: Unable to connect to SMSC [" + msg.getCircle() + "] ");
-								} // End Of Try Catch
-							} // End Of Active Connection Check
+	                if (response.contains(":")) {
+	                    response = response.replaceAll("false:", "Failure");
+	                    cdr.setStatus(response);
+	                } else {
+	                    cdr.setStatus("Failure");
+	                }
 
-							while (this.checkTPS(msg) && this.tpsLock != null) {
-								/** Maintain TPS */
-								Logger.sysLog(LogValues.info, this.getClass().getName(),
-										" [" + this.id + "]  TPS Achieved for current slot ");
-								synchronized (this.tpsLock) {
-									this.tpsLock.wait();
-								}
-								Logger.sysLog(LogValues.debug, this.getClass().getName(),
-										" [" + this.id + "]  TPS Available ");
-							} // End Of TPS check
+	                if (msg.isCallback()) {
+	                    Logger.sysLog(LogValues.info, this.getClass().getName(),
+	                            " [" + this.id + "][" + msg.getRequiredMsisdn() +
+	                                    "] SMS Sending Failed | Sending Failure Callback...");
+	                    msg.getCallbackDetails().setCallbackStatus("Failure");
+	                    msg.getCallbackDetails().setFailureReason("Others");
+	                    Logger.sysLog(LogValues.info, this.getClass().getName(),
+	                            "Sending callback: " + msg.toString());
+	                    CoreUtils.sendCallback(msg);
+	                } else if (!msg.isExpired()) {
+	                    CoreUtils.retrySms(msg);
+	                }
 
-							response = this.push(msg, false);
-							this.smsCount--;
+	                //////////CdrCreator.saveAsXML(cdr);
+	            }
 
-						} // End Of Expiry Check
+	        } // End of while(Pusher.start)
 
-						// if(msg!=null && (response))
+	    } catch (InterruptedException e) {
+	        Logger.sysLog(LogValues.info, this.getClass().getName(),
+	                " [" + this.id + "][" + this.type + "] SMS Listener Interrupted");
+	        Thread.currentThread().interrupt(); // Restore interrupted status
+	    } catch (Exception e) {
+	        Logger.sysLog(LogValues.error, this.getClass().getName(),
+	                " [" + this.id + "][" + this.type + "] Exception while Pushing SMS \n" + Logger.getStack(e));
+	        Logger.sysLog(LogValues.fatal, this.getClass().getName(),
+	                " [" + this.id + "][" + this.type + "] SMSClient has STOPPED | Please RESTART the client ASAP");
+	    }
 
-						if (msg != null && response != null && response.toLowerCase().startsWith("false")) {
-
-							SmsCdrBean cdr = CoreUtils.getSmsCDR(msg);
-							cdr.setMessageId(SMSController.DefaultMessageID);
-
-							if (response.contains(":")) {
-								response = response.replaceAll("false:", "Failure");
-								cdr.setStatus(response);
-							} else {
-								cdr.setStatus("Failure");
-							}
-
-							if (msg.isCallback()) {
-								Logger.sysLog(LogValues.info, this.getClass().getName(),
-										" [" + this.id + "][" + msg.getRequiredMsisdn()
-												+ "] SMS Sending Failed | Sending Failure Callback... ");
-								msg.getCallbackDetails().setCallbackStatus("Failure");
-								msg.getCallbackDetails().setFailureReason("Others");
-								Logger.sysLog(LogValues.info, this.getClass().getName(),
-										"Sending callback: " + msg.toString());
-								CoreUtils.sendCallback(msg);
-							} else if (msg.isExpired() == false) {
-								CoreUtils.retrySms(msg);
-							}
-
-							CdrCreator.saveAsXML(cdr);
-
-						} // End Of Failed Pushing
-
-						/* temporary fix for cpu utilization */
-
-						sleep(5);
-
-					} // End Of Push Loop
-
-				} // End Of Synchronized block
-
-			} // End Of Start Loop
-
-		} catch (SecurityException se) {
-			Logger.sysLog(LogValues.info, this.getClass().getName(),
-					" [" + this.id + "][" + this.type + "] SMS Listener Interrupted ");
-		} catch (InterruptedException e) {
-			Logger.sysLog(LogValues.info, this.getClass().getName(),
-					" [" + this.id + "][" + this.type + "] SMS Listener Interrupted ");
-		} catch (Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(),
-					" [" + this.id + "][" + this.type + "] Exception while Pushing SMS \n" + Logger.getStack(e));
-			Logger.sysLog(LogValues.fatal, this.getClass().getName(),
-					" [" + this.id + "][" + this.type + "] SMSClient has STOPPED | Please RESTART the client ASAP ");
-		} // End Of Try Catch
-
-	}// End Of Thread
-
+	} // End of run()
 	private void updateCircle(Message msg) {
 
 		if (msg == null)
@@ -535,7 +632,7 @@ public class Pusher extends Thread {
 						&& CoreUtils.getProperty("operator").equalsIgnoreCase("AIRTEL")) {
 					SmsCdrBean cdr = CoreUtils.getSmsCDR(msg);
 					smsc.getHttpGateway().sendGETRequest(CoreUtils.getProperty("ussdUrl"), msg, null);
-					CdrCreator.saveAsXML(cdr);
+					//////////CdrCreator.saveAsXML(cdr);
 
 				}
 
@@ -546,6 +643,8 @@ public class Pusher extends Thread {
 						smsc.getSmppGateway().sendMessage(msg);
 					}
 				}
+				
+				
 
 				else if (msg.getMode() == CoreEnums.Protocol.HTTP) {
 
@@ -555,12 +654,12 @@ public class Pusher extends Thread {
 
 					if (smsc.getFormat().getMode().equalsIgnoreCase("POST")) {
 
-						// System.out.println("POST METHOD");
+						 System.out.println("POST METHOD");
 
 						if (smsc.getFormat().getRequestFormat() != null
 								&& !smsc.getFormat().getRequestFormat().equals("")) {
 
-							// System.out.println("RequestFormat is not null");
+							System.out.println("RequestFormat is not null");
 							String resp = null;
 							String messageId = "";
 
@@ -682,6 +781,8 @@ public class Pusher extends Thread {
 								}
 							}
 
+							
+							
 							// msg.setMessage("ATest");
 							String serviceURI = CoreUtils.parseUrl(smsc.getConfig().getServiceUri(), msg, p);
 							Logger.sysLog(LogValues.info, this.getClass().getName(),
@@ -733,9 +834,34 @@ public class Pusher extends Thread {
 								}
 							}
 
-						} else
-							smsc.getHttpGateway().sendPOSTRequest(smsc.getConfig().getServiceUri(), msg.getMessage(),
+						} 
+						else
+						{
+							
+							
+							
+							if(smsc.getFormat().getRequestformat()!=null)
+							{
+								
+							String requestTemplate = smsc.getFormat().getRequestformat(); // {"msisdn":"%msisdn%","message":"%message%"}
+							String requestData = requestTemplate
+							                        .replace("%msisdn%", msg.getMsisdn())
+							                        .replace("%message%", msg.getMessage());
+							System.out.println("calling sendPOSTRequest with -> "+requestData);
+							smsc.getHttpGateway().sendPOSTRequest(smsc.getConfig().getServiceUri(),
+									requestData,
+									//, msg.getMessage(),
 									msg, null);
+							}
+							else
+							{
+								System.out.println("calling sendPOSTRequest with -> "+msg.getMessage());
+								smsc.getHttpGateway().sendPOSTRequest(smsc.getConfig().getServiceUri(),
+										
+										msg.getMessage(),
+										msg, null);
+							}
+						}
 
 					} else if (smsc.getFormat().getMode().equalsIgnoreCase("GET")) {
 						if (smsc.getFormat().getOptions() != null && !smsc.getFormat().getOptions().equals("")) {
@@ -764,7 +890,7 @@ public class Pusher extends Thread {
 							smsc.getHttpGateway().sendGETRequest(smsc.getConfig().getServiceUri(), msg, null);
 					}
 
-					CdrCreator.saveAsXML(cdr);
+					//////////CdrCreator.saveAsXML(cdr);
 
 				} else if (msg.getMode() == CoreEnums.Protocol.SOAP) {
 
@@ -907,13 +1033,13 @@ public class Pusher extends Thread {
 						smsc.getHttpGateway().sendPOSTRequest(smsc.getConfig().getServiceUri(), msg.getMessage(), msg,
 								null);
 
-					CdrCreator.saveAsXML(cdr);
+					//////////CdrCreator.saveAsXML(cdr);
 
 				} else {
 					SmsCdrBean cdr = CoreUtils.getSmsCDR(msg);
 					smsc.getHttpGateway().sendPOSTRequest(smsc.getConfig().getServiceUri(), msg.getMessage(), msg,
 							null);
-					CdrCreator.saveAsXML(cdr);
+					//////////CdrCreator.saveAsXML(cdr);
 				} // End Of IF(Protocols)
 
 				this.smsCount--;

@@ -10,10 +10,10 @@ import org.springframework.context.annotation.PropertySource;
 
 import com.rakesh.sms.beans.Message;
 import com.rakesh.sms.bo.SmsPromoBo;
-import com.bng.sms.queue.SmsQueue;
 import com.rakesh.sms.entity.LanguageSpecification;
 import com.rakesh.sms.entity.PromotionMsisdn1;
 import com.rakesh.sms.entity.SMSPromotion1;
+import com.rakesh.sms.queue.SmsQueue;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;
@@ -29,8 +29,12 @@ public class PromotionTask extends TimerTask{
 	private boolean isRunning;
 
 	private int chunkSize;
+	
+	private final SmsQueue queue;
+	
+	 
 
-	public PromotionTask(String n,SMSPromotion1 smspromo, SmsPromoBo smsPromoBo, int chunkSize){
+	public PromotionTask(String n,SMSPromotion1 smspromo, SmsPromoBo smsPromoBo, int chunkSize,SmsQueue queue){
 		this.name=n;
 		this.sp = smspromo;
 		this.smspromobo = smsPromoBo;
@@ -39,6 +43,7 @@ public class PromotionTask extends TimerTask{
 		this.chunkSize = chunkSize;
 		Logger.sysLog(LogValues.info, this.getClass().getName(),
 				Thread.currentThread().getName()+" promotion task created");
+		this.queue = queue;
 
 	}
 	public String getName() {
@@ -153,7 +158,7 @@ public class PromotionTask extends TimerTask{
 
 				msg.setLanguageSpecifications(spec);
 				msg.setCircle(sp.getCircle());
-				SmsQueue queue = new SmsQueue();
+				
 
 
 				flag = queue.push(msg);

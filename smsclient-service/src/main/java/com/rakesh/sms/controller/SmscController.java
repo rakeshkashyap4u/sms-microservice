@@ -15,7 +15,7 @@ import com.rakesh.sms.bo.GatewayBo;
 import com.rakesh.sms.main.ESME;
 import com.rakesh.sms.main.Pusher;
 import com.rakesh.sms.main.ReConnector;
-import com.bng.sms.queue.QueueManager;
+import com.rakesh.sms.queue.QueueManager;
 import com.rakesh.sms.entity.SMSCConfigs;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
@@ -27,9 +27,10 @@ public class SmscController {
 	private static List<SMSCConfigs> CircleConfigs;
 	private static GatewayBo smscGatewayBo;
 	private static List<String> Circles;
+	
 
 	public SmscController() {
-		SmscController.smscGatewayBo = Pusher.getGatewayBoImpl();
+		//SmscController.smscGatewayBo = smscGatewayBo.getGatewayBoImpl();
 		SmscController.CircleConfigs = null;
 		SmscController.Circles = null;
 	}// End Of Constructor

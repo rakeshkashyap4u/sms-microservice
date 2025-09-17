@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.jsmpp.bean.BindType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.rakesh.sms.bo.GatewayBo;
 import com.rakesh.sms.dao.GatewayDao;
@@ -13,6 +14,7 @@ import com.rakesh.sms.entity.MatchContent;
 import com.rakesh.sms.entity.SMSCConfigs;
 import com.rakesh.sms.entity.SMSCFormats;
 
+@Service
 public class GatewayBoImpl implements GatewayBo {
 
 	@Autowired

@@ -51,7 +51,6 @@ public class SoapClient {
 		return moxml;
 	}
 	
-	
 	@RequestMapping(value = "/receivesms4455", method = RequestMethod.GET)
 	public @ResponseBody String receivesms4455(@RequestParam("test") String test,
 			@RequestParam("serviceId") String serviceId, 
@@ -286,7 +285,7 @@ public class SoapClient {
 
 					String circle = "CR1";
 					if(smsServiceActivationNumber.equals("2277")) circle = "CR2";
-					String stat = new SMSController().receiveSms(smsServiceActivationNumber, message, senderAddress, circle, null);
+					String stat =  "test";//new SMSController().receiveSms(smsServiceActivationNumber, message, senderAddress, circle, null);
 					Logger.sysLog(LogValues.info, SoapClient.class.getName(),"MO SENT: "+stat);
 					temp++;
 				

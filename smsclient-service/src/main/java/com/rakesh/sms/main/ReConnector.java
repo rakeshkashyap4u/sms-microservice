@@ -1,18 +1,24 @@
 package com.rakesh.sms.main;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jsmpp.bean.BindType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.rakesh.sms.beans.SMSC;
-import com.bng.sms.queue.QueueManager;
+import com.rakesh.sms.bo.GatewayBo;
 import com.rakesh.sms.entity.SMSCConfigs;
+import com.rakesh.sms.queue.QueueManager;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
+
+import jakarta.annotation.PostConstruct;
 
 /**
  * 
@@ -20,6 +26,7 @@ import com.rakesh.sms.util.Logger;
  * implementation to Runnable
  * 
  **/
+
 public class ReConnector extends Thread {
 
 	private static final long MaxTimeOut = 2 * 60 * 1000; // 2 Mins
@@ -31,10 +38,16 @@ public class ReConnector extends Thread {
 	private SMSCConfigs config;
 	private boolean status;
 	private String circle;
+	
+	 @Autowired
+	    private GatewayBo gatewayBo;
 
 	static {
 		Trying = new ConcurrentHashMap<String, ReConnector>();
 	}// End Of Static Block
+	
+	
+	
 
 	public ReConnector(SMSCConfigs config) throws Exception {
 
@@ -97,6 +110,12 @@ public class ReConnector extends Thread {
 				" ReConnector Instantiated for SMSC [" + this.circle + "] ");
 
 	}// End Of Constructor
+
+
+	    /**
+	     * This method will run once after Spring Boot starts and all beans are initialized
+	     */
+	  
 
 	public void safeStart() {
 		if (this.isAlive() == false && this.getState().ordinal() == Thread.State.NEW.ordinal()) {

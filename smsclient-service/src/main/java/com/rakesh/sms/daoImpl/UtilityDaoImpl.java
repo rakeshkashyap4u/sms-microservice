@@ -10,7 +10,7 @@ import java.util.List;
 
 
 import org.hibernate.Session;
-
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.rakesh.sms.dao.UtilityDao;
@@ -33,6 +33,7 @@ import com.rakesh.sms.jpas.SmsPropertiesRepository;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
 
+@Repository
 public class UtilityDaoImpl implements UtilityDao {
 	
 	

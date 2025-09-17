@@ -6,11 +6,13 @@ import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.Session;
 
-import com.rakesh.sms.main.Pusher;
-import com.rakesh.sms.main.SmsValidation;
-import com.bng.sms.queue.ActiveMQConnection;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.springframework.jms.connection.CachingConnectionFactory;
+
 import com.rakesh.sms.entity.ActiveAlerts;
 import com.rakesh.sms.features.Quiz;
+import com.rakesh.sms.main.Pusher;
+import com.rakesh.sms.main.SmsValidation;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;
@@ -56,18 +58,30 @@ public class FeatureScheduler implements JobScheduler {
 		this.session = null;
 
 		if (FeatureScheduler.connection == null) {
-			try {
+		    try {
+		    	// Create Artemis ConnectionFactory (Jakarta-compatible)
+		    	ActiveMQConnectionFactory artemisCF =
+		    	        new ActiveMQConnectionFactory("tcp://localhost:61616");
 
-				FeatureScheduler.connection = ActiveMQConnection.getNewConnection();
-				FeatureScheduler.connection.start();
+		    	// Wrap in Spring's CachingConnectionFactory
+		    	CachingConnectionFactory cachingCF = new CachingConnectionFactory((jakarta.jms.ConnectionFactory) artemisCF);
+		    	cachingCF.setSessionCacheSize(10);
 
-			} catch (JMSException jmse) {
-				Logger.sysLog(LogValues.error, this.getClass().getName(),
-						" Unable to start ActiveMQ connection \n" + Logger.getStack(jmse));
-			} // End Of Try Catch
-		} // End Of Connection Check
+		    	// Create the connection
+		    	Connection connection = (Connection) cachingCF.createConnection();
+		    	connection.start();
 
-	}// End Of Constructor
+		    } catch (jakarta.jms.JMSException jmse) {
+		        Logger.sysLog(LogValues.error, this.getClass().getName(),
+		                " Unable to start Artemis connection \n" + Logger.getStack(jmse));
+		    } catch (JMSException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		    
+		}
+
 
 	@Override
 	public void run() {

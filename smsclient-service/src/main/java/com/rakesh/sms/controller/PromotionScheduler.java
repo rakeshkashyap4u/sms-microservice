@@ -121,7 +121,7 @@ private static int promoSchedulerTime;
 					promoName = s.getPromotionName();
 					
 					if(!tasks.containsKey(promoName)) {
-						PromotionTask te1=new PromotionTask(promoName,promotions.get(i),smspromobo,chunkSize);
+						PromotionTask te1=new PromotionTask(promoName,promotions.get(i),smspromobo,chunkSize, null);
 						Thread t = new Thread(te1);
 						tasks.put(promoName,te1);
 						

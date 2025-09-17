@@ -1,4 +1,4 @@
-package com.bng.sms.queue;
+package com.rakesh.sms.queue;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServerConnection;

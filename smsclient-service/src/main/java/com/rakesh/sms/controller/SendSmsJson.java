@@ -2,7 +2,7 @@ package com.rakesh.sms.controller;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +15,12 @@ import com.rakesh.sms.util.Logger;
 
 @Controller
 public class SendSmsJson {
+	
+	 private final SMSController smsController;
+
+	    public SendSmsJson(SMSController smsController) {
+	        this.smsController = smsController;
+	    }
 
 	@RequestMapping(value = "/sendSmsJ", method = RequestMethod.GET)
 	public @ResponseBody String addSmsToQueueJson(@RequestParam(value = "cli", required = false) String cli,
@@ -38,7 +44,7 @@ public class SendSmsJson {
 			@RequestParam(value = "session", required = false) Boolean session,
 			@RequestParam(value = "sessionEnd", required = false) Boolean sessionEnd, HttpServletRequest request) throws IOException {
 
-		String response = new SMSController().addSmsToQueue(cli, msisdn, msgType, content, validate, unicode, smsType,
+		String response = smsController.addSmsToQueue(cli, msisdn, msgType, content, validate, unicode, smsType,
 				callback, circle, reschedule, serviceType, dataCoding, script, flag, expiry, sync, extraDetail,
 				serviceid, multiple, session,null, sessionEnd, 0, false,null, null,null,0,request);
 		//change due to changes in dream travel service of Mexico 

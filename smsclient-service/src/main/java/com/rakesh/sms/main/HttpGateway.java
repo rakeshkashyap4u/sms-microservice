@@ -9,6 +9,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.json.JSONObject;
@@ -111,17 +112,26 @@ public class HttpGateway implements Gateway {
 
 	public void sendPOSTRequest(String requestURI, String requestData, Message sms, Properties p) {
 
+		System.out.println("sendPOSTRequests called with "+requestData);
+		
 		try {
 			Logger.sysLog(LogValues.info, this.getClass().getName(),
 					"RequestURI: " + requestURI + ", requestData: " + requestData + ", sms: " + sms);
 			URL url = new URL(CoreUtils.parseUrl(requestURI, sms, p));
 
 			try {
+				
+				System.out.println("requestURI "+requestURI);
 
 				this.increaseThreadsCount();
 
 				UrlHitter hitter = new UrlHitter(this.manager, url, CoreEnums.HttpMethod.POST);
 				hitter.setPostParam(requestData);
+				
+				HashMap<String, String> headers = new HashMap<>();
+				headers.put("Content-Type", "application/json");
+				hitter.setHttpHeaders(headers); // <-- use the map with your header
+				
 				hitter.setSms(sms);
 				hitter.start();
 
@@ -131,7 +141,7 @@ public class HttpGateway implements Gateway {
 
 		} catch (MalformedURLException me) {
 			Logger.sysLog(LogValues.error, this.getClass().getName(),
-					" Malformed POST URL :: " + requestURI + " --- " + me.getMessage());
+					" Malformed POST URL here 1 :: " + requestURI + " --- " + me.getMessage());
 		} catch (Exception e) {
 			Logger.sysLog(LogValues.error, this.getClass().getName(), " Error Hitting POST URL \n" + e.getMessage());
 		} // End Of Try Catch
@@ -142,6 +152,7 @@ public class HttpGateway implements Gateway {
 
 		try {
 
+			System.out.println("uri"+requestURI);
 			URL url = new URL(CoreUtils.parseUrl(requestURI, sms,p));
 
 			try {

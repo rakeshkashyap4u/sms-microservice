@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.rakesh.sms.beans.Header;
 import com.rakesh.sms.beans.SMSC;
 import com.rakesh.sms.main.Pusher;
-import com.bng.sms.queue.QueueManager;
+import com.rakesh.sms.queue.QueueManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

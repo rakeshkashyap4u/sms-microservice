@@ -18,35 +18,29 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Random;
 
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.codec.binary.Hex;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.bean.OptionalParameter.Tag;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 /*import org.json.simple.*;
 import org.json.simple.parser.ParseException;*/
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.bng.sms.queue.QueueManager;
-import com.bng.sms.queue.SmsQueue;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rakesh.sms.SmsQueueInitializer;
 import com.rakesh.sms.beans.DeliveryInfo;
 import com.rakesh.sms.beans.DeliveryInfoNotification;
 import com.rakesh.sms.beans.InboundMessage;
@@ -59,9 +53,7 @@ import com.rakesh.sms.beans.SmsPromotion;
 import com.rakesh.sms.bo.MatchContentBo;
 import com.rakesh.sms.bo.SmsSubscriptionBo;
 import com.rakesh.sms.bo.ValidationBo;
-import com.rakesh.sms.cdr.CdrCreator;
 import com.rakesh.sms.cdr.ReceivedSmsBean;
-import com.rakesh.sms.cdr.SmsCdrBean;
 import com.rakesh.sms.entity.MatchContent;
 import com.rakesh.sms.entity.MessageActions;
 import com.rakesh.sms.entity.MessageFormats;
@@ -72,6 +64,8 @@ import com.rakesh.sms.main.HttpGateway;
 import com.rakesh.sms.main.Pusher;
 import com.rakesh.sms.main.SMPPMessageListener;
 import com.rakesh.sms.main.SmsValidation;
+import com.rakesh.sms.queue.QueueManager;
+import com.rakesh.sms.queue.SmsQueue;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.CoreEnums.SMSType;
 import com.rakesh.sms.util.CoreUtils;
@@ -83,6 +77,10 @@ import com.rakesh.sms.util.RedisConnection;
 import com.rakesh.sms.util.SimpleParser;
 import com.rakesh.sms.util.XmlParser;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import redis.clients.jedis.Jedis;
 
 /**
@@ -111,7 +109,7 @@ import redis.clients.jedis.Jedis;
  * the protocol
  */
 
-@Controller
+@RestController
 public class SMSController {
 
 	//	Airtel Malawi
@@ -122,6 +120,17 @@ public class SMSController {
 	public static ValidationBo validation;
 	public static MatchContentBo matchContent;
 	public static SmsSubscriptionBo smsSubscriber;
+	
+	@Autowired
+	private ValidationBo validationInstance;
+
+	@PostConstruct
+	public void init() {
+	    SMSController.validation = validationInstance;
+	}
+	
+	 @Autowired
+	    private SmsQueueInitializer smsQueueInitializer;
 
 	public  SmsSubscriptionBo getSmsSubscriber() {
 		return smsSubscriber;
@@ -139,6 +148,7 @@ public class SMSController {
 		SMSController.matchContent = MatchContent;
 	}
 
+
 	public void setValidation(ValidationBo validation) {
 		SMSController.validation = validation;
 	}
@@ -151,13 +161,7 @@ public class SMSController {
 	 * 'User-Agent' is mandatory 'Content-Type' =
 	 * 'application/x-www-form-urlencoded'
 	 * @throws IOException 
-	 * 
-	 * 
 	 */
-	
-	
-	
-	
 	@RequestMapping(value = "/pushSms", method = RequestMethod.POST, headers = "Accept=*")
 	public @ResponseBody String pushSmsToQueue(@RequestParam(value = "cli", required = false) String cli,
 			@RequestParam("msisdn") String msisdn, @RequestParam(value = "priority", required = false) Integer msgType,
@@ -268,8 +272,11 @@ public class SMSController {
 			HttpServletRequest request) throws IOException {
 
 		
+		smsQueueInitializer.initQueue();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String codes[] = CoreUtils.getProperty("countryCodes").split(",");
+		
+		
 
 		boolean sendMultiple = multiple == null ? false : multiple.booleanValue();
 		boolean syncRequest = sync == null ? false : sync.booleanValue();
@@ -735,30 +742,30 @@ public class SMSController {
 						msg.setMsgid(msgid);  //Added for Dream Travel Mexico (since MT message required a special msgId)
 					}
 					
-					//Burkina Faso
-					if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) 
-					{
-						if(cli.equals("399") || cli.equals("226399")) {
-							if(CoreUtils.token1 == null) {
-								CoreUtils.generateAndSaveToken();
-								msg.setToken(CoreUtils.token1);
-								msg.setSenderName("Islamic");
-							} else {
-								msg.setToken(CoreUtils.token1);
-								msg.setSenderName("Islamic");									
-							}
-						} else if(cli.equals("145") || cli.equals("226145")) 
-						{
-							if(CoreUtils.token2 == null) {
-								CoreUtils.generateAndSaveToken();
-								msg.setToken(CoreUtils.token2);
-								msg.setSenderName("MagicVoice");
-							} else {
-								msg.setToken(CoreUtils.token2);
-								msg.setSenderName("MagicVoice");
-							}
-						}
-					}
+//					//Burkina Faso
+//					if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) 
+//					{
+//						if(cli.equals("399") || cli.equals("226399")) {
+//							if(CoreUtils.token1 == null) {
+//								CoreUtils.generateAndSaveToken();
+//								msg.setToken(CoreUtils.token1);
+//								msg.setSenderName("Islamic");
+//							} else {
+//								msg.setToken(CoreUtils.token1);
+//								msg.setSenderName("Islamic");									
+//							}
+//						} else if(cli.equals("145") || cli.equals("226145")) 
+//						{
+//							if(CoreUtils.token2 == null) {
+//								CoreUtils.generateAndSaveToken();
+//								msg.setToken(CoreUtils.token2);
+//								msg.setSenderName("MagicVoice");
+//							} else {
+//								msg.setToken(CoreUtils.token2);
+//								msg.setSenderName("MagicVoice");
+//							}
+//						}
+//					}
 
 
 					Logger.sysLog(LogValues.info, this.getClass().getName(),
@@ -847,7 +854,7 @@ public class SMSController {
 									+ msg.getServiceType() + " | msisdn=" + msg.getMsisdn());
 
 					if (syncRequest == false) {
-
+						/** ASync Request */
 						if (blackedOut == false && queue.push(msg, ldelay))
 							result = "Success";
 						else if (blackedOut && queue.push(msg, diffInMillis))
@@ -924,27 +931,27 @@ public class SMSController {
 						msg.setExtraDetail(extraDetail.trim());
 					}
 
-					SmsCdrBean smsCdr = CoreUtils.getSmsCDR(msg);
+					//SmsCdrBean smsCdr = CoreUtils.getSmsCDR(msg);
 					Date now = new Date(msg.getTime());
-					smsCdr.setSubmittime(sdf.format(now));
-					smsCdr.setMessageId(SMSController.DefaultMessageID);
+					//smsCdr.setSubmittime(sdf.format(now));
+			//		smsCdr.setMessageId(SMSController.DefaultMessageID);
 
-					if (CdrCreator.isJsonCDR()) {
-						smsCdr.setStatus("Failure " + result);
-					} else {
-						smsCdr.setStatus(result);
-					}
+//					if (CdrCreator.isJsonCDR()) {
+//						smsCdr.setStatus("Failure " + result);
+//					} else {
+//						smsCdr.setStatus(result);
+//					}
 
 					Logger.sysLog(LogValues.warn, this.getClass().getName(),
 							" Unable to Push SMS for msisdn= " + msisdn + " | content= " + content + " | time= "
 									+ now.toString() + " | reason= " + result + ".  [CDR successfully created] ");
-					CdrCreator.saveAsXML(smsCdr);
+					//CdrCreator.saveAsXML(smsCdr);
 					result = "Failure";
 
 					/**
 					 * Do Not send Failure callback in case of @Home SMS Push failure
 					 */
-					if (callBack == true && syncRequest == false && CdrCreator.isJsonCDR() == false) {
+					if (callBack == true && syncRequest == false) {
 						msg.setCallback(true);
 						CoreUtils.setCallbackDetails(msg, request);
 						msg.getCallbackDetails().setCallbackStatus(result);
@@ -973,52 +980,52 @@ public class SMSController {
 				if (extraDetail != null && extraDetail.length() > 0) {
 					msg.setExtraDetail(extraDetail.trim());
 				}
+//
+//				//Burkina Faso
+//				if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) {
+//					if(cli.equals("399") || cli.equals("226399")) {
+//						if(CoreUtils.token1 == null) {
+//							CoreUtils.generateAndSaveToken();
+//							msg.setToken(CoreUtils.token1);
+//							msg.setSenderName("Islamic");
+//						} else {
+//							msg.setToken(CoreUtils.token1);
+//							msg.setSenderName("Islamic");									
+//						}
+//					} else if(cli.equals("145") || cli.equals("226145")) {
+//						if(CoreUtils.token2 == null) {
+//							CoreUtils.generateAndSaveToken();
+//							msg.setToken(CoreUtils.token2);
+//							msg.setSenderName("MagicVoice");
+//						} else {
+//							msg.setToken(CoreUtils.token2);
+//							msg.setSenderName("MagicVoice");
+//						}
+//					}
+//				}
 
-				//Burkina Faso
-				if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) {
-					if(cli.equals("399") || cli.equals("226399")) {
-						if(CoreUtils.token1 == null) {
-							CoreUtils.generateAndSaveToken();
-							msg.setToken(CoreUtils.token1);
-							msg.setSenderName("Islamic");
-						} else {
-							msg.setToken(CoreUtils.token1);
-							msg.setSenderName("Islamic");									
-						}
-					} else if(cli.equals("145") || cli.equals("226145")) {
-						if(CoreUtils.token2 == null) {
-							CoreUtils.generateAndSaveToken();
-							msg.setToken(CoreUtils.token2);
-							msg.setSenderName("MagicVoice");
-						} else {
-							msg.setToken(CoreUtils.token2);
-							msg.setSenderName("MagicVoice");
-						}
-					}
-				}
 
-
-				SmsCdrBean smsCdr = CoreUtils.getSmsCDR(msg);
+//				SmsCdrBean smsCdr = CoreUtils.getSmsCDR(msg);
 				Date now = new Date(msg.getTime());
-				smsCdr.setSubmittime(sdf.format(now));
-				smsCdr.setMessageId(SMSController.DefaultMessageID);
-
-				if (CdrCreator.isJsonCDR()) {
-					smsCdr.setStatus("Failure " + result);
-				} else {
-					smsCdr.setStatus(result);
-				}
+//				smsCdr.setSubmittime(sdf.format(now));
+//				smsCdr.setMessageId(SMSController.DefaultMessageID);
+//
+//				if (CdrCreator.isJsonCDR()) {
+//					smsCdr.setStatus("Failure " + result);
+//				} else {
+//					smsCdr.setStatus(result);
+//				}
 
 				Logger.sysLog(LogValues.warn, this.getClass().getName(),
 						" Unable to Push SMS for msisdn= " + msisdn + " | content= " + content + " | time= "
 								+ now.toString() + " | reason= " + result + ".  [CDR successfully created] ");
-				CdrCreator.saveAsXML(smsCdr);
+				//CdrCreator.saveAsXML(smsCdr);
 				result = "Failure";
 
 				/**
 				 * Do Not send Failure callback in case of @Home SMS Push failure
 				 */
-				if (callBack == true && syncRequest == false && CdrCreator.isJsonCDR() == false) {
+				if (callBack == true && syncRequest == false) {
 					msg.setCallback(true);
 					CoreUtils.setCallbackDetails(msg, request);
 					msg.getCallbackDetails().setCallbackStatus(result);
@@ -1080,6 +1087,8 @@ public class SMSController {
 
 		promotion = new SmsPromotion(promotionName, smsText, callerId, circle);
 		Calendar cal = Calendar.getInstance();
+		
+		
 
 
 		if (serviceid != null && serviceid.length() > 0)
@@ -2015,6 +2024,7 @@ public class SMSController {
 		final String hour = String.valueOf(cal.get(Calendar.HOUR_OF_DAY));
 
 		SmsQueue queue = new SmsQueue();
+		
 		Random rand = new Random();
 
 		if (key != null && key.toLowerCase().contains("sms") == true && key.toLowerCase().contains(hour) == true) {

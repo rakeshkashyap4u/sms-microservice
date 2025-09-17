@@ -41,48 +41,43 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.codec.binary.Base64;
 
-import org.hibernate.Session;
 
 import org.jsmpp.PDUException;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+
 
 import com.rakesh.sms.beans.BlackoutHour;
 import com.rakesh.sms.beans.Header;
 import com.rakesh.sms.beans.Message;
 import com.rakesh.sms.beans.Response;
 import com.rakesh.sms.beans.SMSC;
-import com.rakesh.sms.bo.MatchContentBo;
+
 import com.rakesh.sms.bo.UtilityBo;
-import com.rakesh.sms.boImpl.GatewayBoImpl;
-import com.rakesh.sms.cdr.CdrCreator;
+
+
 import com.rakesh.sms.cdr.ReceivedSmsBean;
 import com.rakesh.sms.cdr.SmsCdrBean;
 import com.rakesh.sms.controller.SMSController;
-import com.rakesh.sms.daoImpl.DBConnection;
-import com.rakesh.sms.entity.ActiveAlerts;
+
 import com.rakesh.sms.entity.LanguageSpecification;
-import com.rakesh.sms.entity.MatchContent;
+
 import com.rakesh.sms.entity.MessageFormats;
 import com.rakesh.sms.entity.MsisdnSeries;
 import com.rakesh.sms.entity.SMSBlacklist;
 import com.rakesh.sms.entity.SMSCConfigs;
 import com.rakesh.sms.entity.SMSCFormats;
-import com.rakesh.sms.entity.SmsSubscription;
+
 import com.rakesh.sms.entity.MsgContents;
 import com.rakesh.sms.main.HttpGateway;
 import com.rakesh.sms.main.Pusher;
 import com.rakesh.sms.main.SmsValidation;
-import com.bng.sms.queue.QueueManager;
-import com.bng.sms.queue.SmsQueue;
+import com.rakesh.sms.queue.QueueManager;
+import com.rakesh.sms.queue.SmsQueue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -92,6 +87,7 @@ import com.rakesh.sms.util.CoreEnums.ExpiryUnit;
 import com.rakesh.sms.util.CoreEnums.Protocol;
 import com.rakesh.sms.util.CoreEnums.SMSType;
 import com.rakesh.sms.util.CoreEnums.Type;
+
 
 public class CoreUtils {
 
@@ -110,6 +106,10 @@ public class CoreUtils {
 
 	private static Integer msisdnLength;
 	public static String dbUsername;
+	
+	public static void setUtilityBo(UtilityBo utilBo) {
+        utilboimpl = utilBo;
+    }
 
 
 	public static HashMap<String, ArrayList<String>> getContents() {
@@ -155,13 +155,11 @@ public class CoreUtils {
 		CoreUtils.utilboimpl = utilboimpl;
 	}
 
-	public static void setProperties(HashMap<String, String> properties) {
-		if (CoreUtils.properties != null) {
-			CoreUtils.properties.clear();
-			CoreUtils.properties = null;
-		}
-		CoreUtils.properties = properties;
-	}
+	public static void setProperties(HashMap<String, String> props) {
+        // Replace the map atomically
+        properties = props != null ? props : new HashMap<>();
+    }
+
 
 	public void setExtraParams(HashMap<String, String> extraParams) {
 		if (CoreUtils.extraParams != null) {
@@ -793,6 +791,13 @@ public class CoreUtils {
 
 				String parsedURL = simpleParser.parse(prop);
 				// CoreUtils.printProperties(prop);
+				
+				// Log BEFORE clearing
+				Logger.sysLog(LogValues.info, CoreUtils.class.getName(), 
+				    url + ", New Parsed Url: " + parsedURL);
+				Logger.sysLog(LogValues.info, CoreUtils.class.getName(), 
+				    " Properties in parseurl " + prop);
+
 				prop.clear();
 				Logger.sysLog(LogValues.info, CoreUtils.class.getName(), url + ", New Parsed Url: " + parsedURL);
 				
@@ -1168,7 +1173,7 @@ public class CoreUtils {
 				SmsCdrBean cdr = CoreUtils.getSmsCDR(sms);
 				cdr.setMessageId(SMSController.DefaultMessageID);
 				cdr.setStatus("Failure");
-				CdrCreator.saveAsXML(cdr);
+				//CdrCreator.saveAsXML(cdr);
 
 			} // End Of Retry
 

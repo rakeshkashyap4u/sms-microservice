@@ -3,12 +3,14 @@ package com.rakesh.sms.scheduler;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 
+import org.springframework.jms.core.JmsTemplate;
+
 import com.rakesh.sms.beans.Message;
 import com.rakesh.sms.beans.SmsPromotion;
 import com.rakesh.sms.bo.AlertsBo;
-import com.bng.sms.queue.QueueManager;
-import com.bng.sms.queue.SmsQueue;
 import com.rakesh.sms.entity.LanguageSpecification;
+import com.rakesh.sms.queue.QueueManager;
+import com.rakesh.sms.queue.SmsQueue;
 import com.rakesh.sms.util.AppContext;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.CoreUtils;
@@ -23,6 +25,7 @@ public class Promotions implements JobScheduler {
 	private int uploadCount;
 	private Object lock;
 	private int id;
+
 
 	public Promotions(SmsPromotion details) {
 		this.alertsboimpl = (AlertsBo) AppContext.getBean("alertsBo");

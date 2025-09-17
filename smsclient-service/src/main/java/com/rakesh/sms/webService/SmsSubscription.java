@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.jws.WebService;
 
-import com.rakesh.sms.cdr.CdrCreator;
+
 import com.rakesh.sms.cdr.ReceivedSmsBean;
 import com.rakesh.sms.main.SMPPMessageListener;
 import com.rakesh.sms.main.SmsValidation;
@@ -86,7 +86,7 @@ public class SmsSubscription {
 			cdr.setContent(keyword);
 			cdr.setSender(msisdn);
 
-			CdrCreator.saveAsXML(cdr);
+			//CdrCreator.saveAsXML(cdr);
 		}
 
 		Logger.sysLog(LogValues.info, this.getClass().getName(), "Returning " + response);
@@ -161,7 +161,7 @@ public class SmsSubscription {
 			cdr.setContent(keyword);
 			cdr.setSender(msisdn);
 
-			CdrCreator.saveAsXML(cdr);
+			//CdrCreator.saveAsXML(cdr);
 		}
 
 		Logger.sysLog(LogValues.info, this.getClass().getName(), "Returning " + response);
@@ -242,7 +242,7 @@ public class SmsSubscription {
 			cdr.setContent("info");
 			cdr.setSender(msisdn);
 
-			CdrCreator.saveAsXML(cdr);
+			//CdrCreator.saveAsXML(cdr);
 		}
 
 		return serviceArray;

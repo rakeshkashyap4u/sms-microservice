@@ -23,7 +23,7 @@ import com.rakesh.sms.beans.Message;
 import com.rakesh.sms.bo.UtilityBo;
 import com.rakesh.sms.main.JConsole;
 import com.rakesh.sms.main.SMPPMessageListener;
-import com.bng.sms.queue.SmsQueue;
+import com.rakesh.sms.queue.SmsQueue;
 import com.rakesh.sms.entity.SMSBlacklist;
 import com.rakesh.sms.entity.SMSWhitelist;
 import com.rakesh.sms.util.CoreUtils;
@@ -35,6 +35,8 @@ public class Utility {
 
 	private UtilityBo myBo;
 	private String version, revision;
+	
+
 
 	public void setVersion(String version) {
 		this.version = version;
@@ -133,9 +135,9 @@ public class Utility {
 		Message msg = null;
 
 		if (queue != null && queue.toString().equalsIgnoreCase("null") == false)
-			msg = SmsQueue.peek(queue);
+			msg = null;  //queue.peek(queue);
 		else
-			msg = SmsQueue.peek(0);
+			msg = null; //queue.peek(0);
 
 		if (msg != null)
 			return msg.toString();

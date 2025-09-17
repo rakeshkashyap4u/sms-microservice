@@ -1,4 +1,4 @@
-package com.bng.sms.queue;
+package com.rakesh.sms.queue;
 
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -164,7 +164,7 @@ public class QueueManager extends Thread {
 		} else {
 			// re-add the circle config
 			// addSMSC(circle, smsc);
-			//Logger.sysLog(LogValues.info, QueueManager.class.getName(), "smsclist:" + smscList);
+			Logger.sysLog(LogValues.info, QueueManager.class.getName(), "smsclist:" + smscList);
 			Logger.sysLog(LogValues.debug, QueueManager.class.getName(), " NO SMSC found in Hashtable ");
 		}
 		return null;
@@ -286,19 +286,7 @@ public class QueueManager extends Thread {
 					" MBeans Disabled | Assuming initial queue size to be 0 ");
 		}
 
-		//Airtel Malawi (initially i < 3)
-		for (int i = 0; i < 4; i++) {
-
-			if (this.queueBroker != null) {
-				SmsQueue.setSize(i, this.queueBroker.getSize(SmsQueue.Queue + String.valueOf(i)));
-			} else {
-				SmsQueue.setSize(i, 0);
-			}
-
-			QueueManager.listeners[i] = new Pusher(i);
-			listeners[i].start();
-
-		} // End Of Loop
+		
 
 		while (this.manage) {
 

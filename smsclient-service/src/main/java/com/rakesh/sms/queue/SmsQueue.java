@@ -1,23 +1,23 @@
-package com.bng.sms.queue;
+package com.rakesh.sms.queue;
 
 import java.sql.Date;
 import java.util.Enumeration;
 
-import javax.jms.DeliveryMode;
-import javax.jms.Destination;
-import javax.jms.IllegalStateException;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageProducer;
-import javax.jms.Queue;
-import javax.jms.QueueBrowser;
-import javax.jms.Session;
-import javax.jms.TextMessage;
+import jakarta.jms.DeliveryMode;
+import jakarta.jms.Destination;
+import jakarta.jms.IllegalStateException;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.MessageProducer;
+import jakarta.jms.Queue;
+import jakarta.jms.QueueBrowser;
+import jakarta.jms.Session;
+import jakarta.jms.TextMessage;
 
 import org.apache.activemq.ScheduledMessage;
 import org.apache.activemq.command.ActiveMQQueue;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.rakesh.sms.beans.Message;
-import com.rakesh.sms.main.Pusher;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
@@ -29,21 +29,34 @@ public class SmsQueue {
 	public static final String Queue = "smsqueue";
 	private static Session session;
 	
+	@Autowired
+	private SimpleActiveMQConnection simpleActiveMQConnection;
+	
 	Date date = new Date(0);
+	
+	public SmsQueue()
+	{
+		
+	}
 
-	protected static void init(Session session) {
+	public static void init(Session session) {
+	    if (session == null) {
+	        Logger.sysLog(LogValues.error, SmsQueue.class.getName(), "Cannot initialize SmsQueue: JMS session is null");
+	        return;
+	    }
+	    SmsQueue.session = session;
 
-		try {
+	    synchronized (newMessageCount) {
+	        for (int i = 0; i < newMessageCount.length; i++) {
+	            newMessageCount[i] = 0L;
+	        }
+	    }
 
-			SmsQueue.session = session;
-//			newMessageCount[0] = newMessageCount[1] = newMessageCount[2] = 0L;
-			newMessageCount[0] = newMessageCount[1] = newMessageCount[2] = newMessageCount[3] = 0L; //Airtel Malawi
+	    Logger.sysLog(LogValues.info, SmsQueue.class.getName(), 
+	        "SmsQueue initialized successfully. JMS session is set: " + (SmsQueue.session != null));
+	}
 
-		} catch (Exception e) {
-			Logger.sysLog(LogValues.error, SmsQueue.class.getName(), Logger.getStack(e));
-		} // End Of TryCatch
 
-	}// End Of Method
 
 	protected static long getSize(int type) {
 
@@ -64,6 +77,11 @@ public class SmsQueue {
 	public boolean push(Message msg, long delay) {
 		int type = msg.getType().ordinal();
 		
+		if (SmsQueue.session == null) {
+		    Logger.sysLog(LogValues.error, this.getClass().getName(),
+		        "Cannot push SMS: JMS session not initialized.");
+		    return false;
+		}
 		
 		return this.push(msg, SmsQueue.Queue + type, delay);
 	}// End Of Method
@@ -132,7 +150,7 @@ public class SmsQueue {
 		try {
 
 			String queueName = SmsQueue.Queue + type;
-			Queue queue = (javax.jms.Queue) new ActiveMQQueue(queueName + "?consumer.dispatchAsync=false&consumer.prefetchSize=10");
+			Queue queue = (jakarta.jms.Queue) new ActiveMQQueue(queueName + "?consumer.dispatchAsync=false&consumer.prefetchSize=10");
 			QueueBrowser browser = sess.createBrowser(queue);
 			Logger.sysLog(LogValues.debug, SmsQueue.class.getName(),
 					" Browser for " + queueName + " Successfully Created ");
@@ -153,12 +171,12 @@ public class SmsQueue {
 
 		try {
 			
-			//System.out.println("here u come now in pop");
+			System.out.println("here u come now in pop");
 
 			String jsonMessage = "{}";
 			if (newMessageCount[type] > 0) {
 
-				javax.jms.Message message = consumer.receive(1000);
+				javax.jms.Message message = (javax.jms.Message) consumer.receive(1000);
 				
 				//javax.jms.Message message = consumer.receiveNoWait();
 				

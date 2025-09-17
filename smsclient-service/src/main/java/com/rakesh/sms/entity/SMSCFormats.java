@@ -39,6 +39,17 @@ public class SMSCFormats {
 	
 	@Column(name = "options")
 	private String options;
+	
+	@Column(name = "request_format")
+	private String requestformat;
+
+	public String getRequestformat() {
+		return requestformat;
+	}
+
+	public void setRequestformat(String requestformat) {
+		this.requestformat = requestformat;
+	}
 
 	public String getOptions() {
 		return options;

@@ -63,9 +63,9 @@ public class LanguageSpecification {
 		this.dataCoding = dataCoding;
 	}
 
-	public void setDataCoding(Byte dataCoding) {
-		this.dataCoding = new Integer(dataCoding);
-	}
+//	public void setDataCoding(Byte dataCoding) {
+//		this.dataCoding = new Integer(dataCoding);
+//	}
 
 	public String getServiceType() {
 		return serviceType;

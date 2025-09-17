@@ -7,9 +7,9 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import com.rakesh.sms.beans.Message;
-import com.bng.sms.queue.SmsQueue;
 import com.rakesh.sms.entity.LanguageSpecification;
 import com.rakesh.sms.features.beans.QuizMessage;
+import com.rakesh.sms.queue.SmsQueue;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;

@@ -206,9 +206,9 @@ public class SmsCdrBean implements Serializable, Cloneable {
 		return super.clone();
 	}
 
-	@Override
-	public String toString() {
-		return CdrCreator.jsonReader.toJson(this);
-	}// End Of Method
+//	@Override
+//	public String toString() {
+//		return CdrCreator.jsonReader.toJson(this);
+//	}// End Of Method
 
 }

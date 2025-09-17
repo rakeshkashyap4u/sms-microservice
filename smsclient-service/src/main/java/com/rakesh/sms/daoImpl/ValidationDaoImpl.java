@@ -1,22 +1,16 @@
 package com.rakesh.sms.daoImpl;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
 import org.hibernate.Session;
-import org.hibernate.StaleStateException;
-
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.common.base.Objects;
 import com.rakesh.sms.beans.MODetails;
 import com.rakesh.sms.dao.ValidationDao;
 import com.rakesh.sms.entity.DoubleConsent;
@@ -24,7 +18,6 @@ import com.rakesh.sms.entity.GamingUser;
 import com.rakesh.sms.entity.MessageActions;
 import com.rakesh.sms.entity.MessageFormats;
 import com.rakesh.sms.entity.MtResponse;
-import com.rakesh.sms.entity.QuestionResponse;
 import com.rakesh.sms.entity.SmsLogs;
 import com.rakesh.sms.entity.SmsMessages;
 import com.rakesh.sms.jpas.DoubleConsentRepository;
@@ -40,7 +33,7 @@ import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
 
-@Service
+@Repository
 public class ValidationDaoImpl implements ValidationDao {
 	
 	
@@ -127,64 +120,87 @@ public class ValidationDaoImpl implements ValidationDao {
 	             .orElse(-1);
 	 }
 
-	@Transactional
-	public int validate(String serviceCode, String query, String msisdn) {
+	 @Transactional
+	 public int validate(String serviceCode, String query, String msisdn) {
 
-	    int matchedMessageId = -1;
+	     int matchedMessageId = -1;
 
-	    try {
-	        // 1. Split SMS into keyword, subkey, and remaining arguments
-	        String[] args = query.split("\\s+");
-	        if (args.length < 1) {
-	            Logger.sysLog(LogValues.error, getClass().getName(),
-	                    "SMS received has LESS arguments than expected: " + query);
-	            return matchedMessageId;
-	        }
+	     try {
+	         // 1. Split SMS into keyword, subkey, args
+	         String[] args = query.split("\\s+");
+	         if (args.length < 1) {
+	             Logger.sysLog(LogValues.error, getClass().getName(),
+	                     "SMS received has LESS arguments than expected: " + query);
+	             return matchedMessageId;
+	         }
 
-	        String keyword = args[0].trim();
-	        String subkey = args.length > 1 && !args[1].trim().isEmpty() ? args[1].trim() : "#";
+	         String keyword = args[0].trim();
+	         String subkey = (args.length > 1 && !args[1].trim().isEmpty()) ? args[1].trim() : "#";
 
-	        String[] queryArgs = new String[args.length - 2 > 0 ? args.length - 2 : 0];
-	        for (int i = 2; i < args.length; i++) queryArgs[i - 2] = args[i].trim();
+	         String[] queryArgs = new String[Math.max(0, args.length - 2)];
+	         for (int i = 2; i < args.length; i++) {
+	             queryArgs[i - 2] = args[i].trim();
+	         }
 
-	        Logger.sysLog(LogValues.info, getClass().getName(),
-	                "serviceCode: " + serviceCode + ", keyword: " + keyword + ", subkey: " + subkey);
+	         Logger.sysLog(LogValues.info, getClass().getName(),
+	                 "serviceCode: " + serviceCode + ", keyword: " + keyword + ", subkey: " + subkey);
 
-	        // 2. Fetch matching MessageFormats from DB
-	        List<MessageFormats> formats = messageFormatsRepo
-	                .findByServiceCodeAndKeywordInAndSubkeyInOrderByIdDesc(
-	                        serviceCode,
-	                        List.of(keyword, SmsValidation.ANY),
-	                        List.of(subkey, SmsValidation.ANY)
-	                );
+	         // 2. Fetch both exact + ANY/ANY formats
+	         List<MessageFormats> formats = messageFormatsRepo
+	                 .findByServiceCodeAndKeywordInAndSubkeyInOrderByIdDesc(
+	                         serviceCode,
+	                         List.of(keyword, SmsValidation.ANY),
+	                         List.of(subkey, SmsValidation.ANY)
+	                 );
 
-	        // 3. Loop through results and match arguments dynamically
-	        for (MessageFormats format : formats) {
-	            if (isArgumentsMatching(format, queryArgs)) {
-	                matchedMessageId = format.getId();
-	                Logger.sysLog(LogValues.info, getClass().getName(),
-	                        "SMS matched format: " + format);
-	                break;
-	            }
-	        }
+	         Logger.sysLog(LogValues.info, getClass().getName(),
+	                 "formats fetched: " + formats.size());
 
-	        if (matchedMessageId == -1) {
-	            Logger.sysLog(LogValues.warn, getClass().getName(),
-	                    "SMS DID NOT match any format: " + query);
-	        }
+	         // 3. Match arguments (with wildcards)
+	         for (MessageFormats format : formats) {
+	             if (isArgumentsMatching(format, queryArgs)) {
+	                 matchedMessageId = format.getId();
+	                 Logger.sysLog(LogValues.info, getClass().getName(),
+	                         "SMS matched format: " + format);
+	                 break;
+	             }
+	         }
 
-	    } catch (Exception e) {
-	        Logger.sysLog(LogValues.error, getClass().getName(), Logger.getStack(e));
-	    }
+	         if (matchedMessageId == -1) {
+	             Logger.sysLog(LogValues.warn, getClass().getName(),
+	                     "SMS DID NOT match any format: " + query);
+	         }
 
-	    return matchedMessageId;
-	}
+	     } catch (Exception e) {
+	         Logger.sysLog(LogValues.error, getClass().getName(), Logger.getStack(e));
+	     }
+
+	     return matchedMessageId;
+	 }
+
+	 private boolean isArgumentsMatching(MessageFormats format, String[] queryArgs) {
+		    String[] dbArgs = { format.getArgument1(), format.getArgument2(), format.getArgument3() };
+
+		    for (int i = 0; i < dbArgs.length; i++) {
+		        String expected = dbArgs[i];
+		        String actual = (i < queryArgs.length) ? queryArgs[i] : SmsValidation.NULL;
+
+		        if (expected == null || expected.isEmpty() || "#".equals(expected)) {
+		            continue; // treat # or null as wildcard
+		        }
+
+		        if ("*".equals(expected)) {
+		            continue; // universal wildcard
+		        }
+
+		        if (!expected.equalsIgnoreCase(actual)) {
+		            return false; // mismatch
+		        }
+		    }
+		    return true;
+		}
 
 
-	private boolean isArgumentsMatching(MessageFormats format, String[] queryArgs) {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
 	@Transactional
 	public int addMOAction(MessageActions action) {

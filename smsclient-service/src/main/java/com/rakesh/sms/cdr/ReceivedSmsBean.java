@@ -219,9 +219,9 @@ public class ReceivedSmsBean implements Serializable {
 
 	}// End Of Method
 
-	@Override
-	public String toString() {
-		return CdrCreator.jsonReader.toJson(this);
-	}// End Of Method
+//	@Override
+//	public String toString() {
+//		return CdrCreator.jsonReader.toJson(this);
+//	}// End Of Method
 
 }

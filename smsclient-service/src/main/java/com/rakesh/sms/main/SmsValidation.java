@@ -25,7 +25,6 @@ import com.rakesh.sms.beans.Response;
 import com.rakesh.sms.beans.SessionParameters;
 import com.rakesh.sms.beans.USSDuser;
 import com.rakesh.sms.bo.ReportsBo;
-import com.rakesh.sms.cdr.CdrCreator;
 import com.rakesh.sms.cdr.ReceivedSmsBean;
 import com.rakesh.sms.controller.SMSController;
 import com.rakesh.sms.entity.DoubleConsent;
@@ -181,16 +180,16 @@ public class SmsValidation implements Runnable {
 						ie.getMessage() + " Unable to read M0 or DR | Please Restart the tomcat ");
 				cdr.setFailedStatus();
 				cdr.setContent(textMessage);
-				CdrCreator.saveAsXML(cdr);
+				//CdrCreator.saveAsXML(cdr);
 			} // End Of Inner Try Catch
 
 		} catch (Exception e) {
 
 			Logger.sysLog(LogValues.error, this.getClass().getName(), Logger.getStack(e));
 
-			cdr.setFailedStatus();
-			cdr.setContent(textMessage);
-			CdrCreator.saveAsXML(cdr);
+//			cdr.setFailedStatus();
+//			cdr.setContent(textMessage);
+//			CdrCreator.saveAsXML(cdr);
 
 		} // End Of Main Try Catch
 
@@ -272,8 +271,12 @@ public class SmsValidation implements Runnable {
 				// now " + gateway);
 
 				Message sms = CoreUtils.createMTfromMOcdr(cdr);
+				Logger.sysLog(LogValues.info, this.getClass().getName(),
+						" HERE SMS NOE " + sms.toString());
 
-				HttpGateway gateway = Pusher.getHttpGateway(sms.getCircle());
+			//	HttpGateway gateway = Pusher.getHttpGateway(sms.getCircle());
+				HttpGateway gateway = Pusher.getHttpGateway("PRO");
+				
 
 				Logger.sysLog(LogValues.info, this.getClass().getName(),
 						" Recieving gateway now " + gateway + ", circle: " + sms.getCircle());
@@ -470,8 +473,12 @@ public class SmsValidation implements Runnable {
 							System.out.println(type);
 
 							System.out.println(detail);
+							
+							
 
 							if (type != null && detail != null) {
+								
+								
 
 								if (type.equalsIgnoreCase("GET")) {
 									System.out.println("inside for loop get case");
@@ -496,6 +503,8 @@ public class SmsValidation implements Runnable {
 														+ " --- NO Action Taken ");
 									}
 
+									
+									
 								} else if (type.equalsIgnoreCase("SubEndDate")) {
 
 									String resp = gateway.sendSyncGETRequest(detail.trim(), sms);
@@ -1210,7 +1219,7 @@ public class SmsValidation implements Runnable {
 
 				} // End Of USSD-MO Check
 
-				CdrCreator.saveAsXML(cdr);
+				//CdrCreator.saveAsXML(cdr);
 
 			} else if (this.cdr.isDeliveryReport() == false) {
 				/** Blank MO */
@@ -1237,22 +1246,22 @@ public class SmsValidation implements Runnable {
 						sms.getCallbackDetails().setFailureReason(cdr.getStatus());
 					}
 
-					if (CdrCreator.isJsonCDR()) {
-						/** For ATHOME */
-
-						String callbackstatus = sms.getCallbackDetails().getCallbackStatus();
-						String deliverystatus = this.cdr.getStatus();
-
-						sms.getCallbackDetails().setCallbackStatus(deliverystatus);
-						this.cdr.setReason(deliverystatus);
-
-						if (callbackstatus != null && callbackstatus.equalsIgnoreCase("Success")) {
-							this.cdr.setStatus("Success");
-						} else {
-							this.cdr.setStatus("Failure");
-						}
-
-					} // End Of JSON Check
+//					if (CdrCreator.isJsonCDR()) {
+//						/** For ATHOME */
+//
+//						String callbackstatus = sms.getCallbackDetails().getCallbackStatus();
+//						String deliverystatus = this.cdr.getStatus();
+//
+//						sms.getCallbackDetails().setCallbackStatus(deliverystatus);
+//						this.cdr.setReason(deliverystatus);
+//
+//						if (callbackstatus != null && callbackstatus.equalsIgnoreCase("Success")) {
+//							this.cdr.setStatus("Success");
+//						} else {
+//							this.cdr.setStatus("Failure");
+//						}
+//
+//					} // End Of JSON Check
 
 					if (SmsValidation.callbackUrl != null) {
 						HttpGateway gateway = Pusher.getHttpGateway(sms.getCircle());
@@ -1269,7 +1278,7 @@ public class SmsValidation implements Runnable {
 
 				} // End Of Callback Check
 
-				CdrCreator.saveAsXML(cdr);
+			//	CdrCreator.saveAsXML(cdr);
 
 			} // End Of Delivery Report Check
 
