@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>SMS Whitelisted Numbers</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		
+		<link rel="stylesheet" media="all" type="text/css" href="../promotion/css/main.css" />		
+		<script type="text/javascript" src="../promotion/js/jquery-2.1.4.js"></script>		
+	</head>
+	<body>
+		<script type="text/javascript">
+			
+			$(document).ready(function() {
+				getWhitelistNumbers();
+			});
+	
+			function getWhitelistNumbers()	 {
+	
+				$.ajax({
+					type : 'GET',
+					url : '../getWhitelistedNumbersAsJson',
+					encode : true,
+					success : function(response) 	{
+						console.log(response);
+						resp_obj = JSON.parse(response);
+						whitelist_array = resp_obj.whitelist;
+						
+						var op_string = '';
+						
+						for (i = 0; i < whitelist_array.length; i++) {
+							op_string += '<tr><td>'+ whitelist_array[i].shortcode +'</td><td>'+ whitelist_array[i].msisdn +'</td></tr>';
+						}//End Of Loop
+						
+						$('#msisdnList').append(op_string);
+						
+						$('td').mouseover(function()	{
+							$(this).parent().css("font-size", "15px").css("font-weight", "bold");
+						});
+						
+						$('td').mouseout(function()	{
+							$(this).parent().css("font-size", "14px").css("font-weight", "normal");
+						});
+						
+						console.log(op_string);
+					},
+					error : function(xhr, status) {
+						console.log(status);
+					}
+				});
+								
+			}//End Of getPromotions
+			
+			function toggle_option() 	{
+				
+				$upsl = $('#upload_selected');
+				$ctsl = $('#category_selected');
+	
+				if (document.getElementById('s1').checked) {
+					$('.select_show').animate({
+						height : '0'
+					});
+					$ctsl.hide();
+					$upsl.show();
+					
+					$ctsl.animate({
+						height : '0'
+					});
+					$upsl.animate({
+						height : '55'
+					});
+	
+				}
+				
+				if (document.getElementById('s2').checked) {
+					$('.select_show').animate({
+						height : '0'
+					});
+					
+					$ctsl.show();
+					$upsl.hide();
+					
+					$upsl.animate({
+						height : '0'
+					});
+					$ctsl.animate({
+						height : '60'
+					});
+				}
+				
+			}//End of toggle_option()
+	
+			function base_file_format(id) {
+				$('#msisdnfileupload_error').html('');
+				var id = '#' + id;
+				// var uploadPreview_id = id+'_preview';
+				var file_data = $(id).prop("files")[0];
+				var file_name = file_data.name;
+				var extention = file_name.split('.').pop();
+				if (extention != 'csv') {
+					document.getElementById('msisdnfileupload_error').innerHTML = 'Please upload your base as a *.csv file.'
+					return false;
+				}
+			}//End Of base_file_format
+
+			
+		</script>
+	
+		<div id="pageHeader">
+			<div id="bng_logo">
+				<!-- <img src="images/logo.jpg" width="80"> -->
+				<p><font color="black">black</font>N<font color="green">green</font></p>
+			</div>
+			<div id="headingMain">
+				<b>SMS</b>Client
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div id="mainContent">
+			<div id="content" style="width:565px;">
+				<div id="container" class="containerCss noBackground" >
+					<div id="whitelisted" class="whiteNumbers" >
+						<h2> Whitelisted Msisdn </h2>
+						<table id="msisdnList">
+							<tr>
+								<th>Shortcode</th>
+								<th>MSISDN</th>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<div class="clear"></div>
+			</div>
+			<div id="formContainer">
+				<div id="addBlacklist">
+					<h2>Add New Whitelist Number(s)</h2>
+					<form id="addBNForm" class="displayForm" method="POST" action="/SMSClient/addWhitelistUser" enctype="multipart/form-data">
+						<table class="inner-table">
+							<tr>
+								<td class="f-name">Shortcode</td>
+								<td>
+								<input type="text" name="shortcode" id="shortcode"/>
+								</td>
+							</tr>
+							<tr>
+								<td class="f-name">Numbers</td>
+								<td>
+									<input id="s1" name="baseType" type="radio" value="upload" onchange="toggle_option();" class="inputType" checked />
+									<label for="s1" class="rLabel">Upload Base</label>
+									<input id="s2" name="baseType" type="radio" value="category" onchange="toggle_option();" class="config_dependant_cat inputType" />
+									<label for="s2" class="rLabel">Enter Msisdn</label>
+								</td>
+							</tr>
+							<tr>
+								<td>&nbsp;</td>
+								<td style="height: 70px;">
+									<div id="category_selected" class="select_show" style="display:none; height:0px;">
+										<span class="small">Enter Comma Separated MSISDNs</span><br/>
+										<input id="msisdnInput" class="inputType" name="inputMsisdn" type="text" />
+										<div id="category_error" class="add_camp_error"></div>
+									</div>
+									<div id="upload_selected" class="select_show" >
+										<span class="small">Upload base as a CSV file</span><br/>
+										<input name="baseFile[]" type="file" class="inputType fileupload" onchange="base_file_format(this.id);" />
+										<div id="msisdnfileupload_error" class="add_camp_error fileupload"></div>
+									</div>
+								</td>
+							</tr>							
+							<tr>
+								<td colspan="2" class="center">
+									<hr class="hrLine" />
+									<input type="submit" value="Add" name="add" class="submitButton center"/>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	</body>
+</html>

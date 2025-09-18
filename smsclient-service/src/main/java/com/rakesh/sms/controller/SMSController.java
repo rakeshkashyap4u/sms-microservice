@@ -112,7 +112,7 @@ import redis.clients.jedis.Jedis;
 @RestController
 public class SMSController {
 
-	//	Airtel Malawi
+	// Airtel Malawi
 	@Value("${blackoutenable}")
 	boolean blackoutenable;
 
@@ -120,19 +120,19 @@ public class SMSController {
 	public static ValidationBo validation;
 	public static MatchContentBo matchContent;
 	public static SmsSubscriptionBo smsSubscriber;
-	
+
 	@Autowired
 	private ValidationBo validationInstance;
 
 	@PostConstruct
 	public void init() {
-	    SMSController.validation = validationInstance;
+		SMSController.validation = validationInstance;
 	}
-	
-	 @Autowired
-	    private SmsQueueInitializer smsQueueInitializer;
 
-	public  SmsSubscriptionBo getSmsSubscriber() {
+	@Autowired
+	private SmsQueueInitializer smsQueueInitializer;
+
+	public SmsSubscriptionBo getSmsSubscriber() {
 		return smsSubscriber;
 	}
 
@@ -148,7 +148,6 @@ public class SMSController {
 		SMSController.matchContent = MatchContent;
 	}
 
-
 	public void setValidation(ValidationBo validation) {
 		SMSController.validation = validation;
 	}
@@ -160,7 +159,8 @@ public class SMSController {
 	/**
 	 * 'User-Agent' is mandatory 'Content-Type' =
 	 * 'application/x-www-form-urlencoded'
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	@RequestMapping(value = "/pushSms", method = RequestMethod.POST, headers = "Accept=*")
 	public @ResponseBody String pushSmsToQueue(@RequestParam(value = "cli", required = false) String cli,
@@ -182,19 +182,21 @@ public class SMSController {
 			@RequestParam(value = "serviceid", required = false) String serviceid,
 			@RequestParam(value = "multiple", required = false) Boolean multiple,
 			@RequestParam(value = "session", required = false) Boolean session,
-			@RequestParam(value = "sessionEnd", required = false) Boolean sessionEnd, HttpServletRequest request) throws IOException {
+			@RequestParam(value = "sessionEnd", required = false) Boolean sessionEnd, HttpServletRequest request)
+			throws IOException {
 
 		return this.addSmsToQueue(cli, msisdn, msgType, content, validate, unicode, smsType, callback, circle,
 				reschedule, serviceType, dataCoding, script, flag, expiry, sync, extraDetail, serviceid, multiple,
-				session,null, sessionEnd, 0, false,null,null,null,0, request);   //Added for Dream Travel Mexico (since MT message required a special msgId)
+				session, null, sessionEnd, 0, false, null, null, null, 0, request); // Added for Dream Travel Mexico
+																					// (since MT message required a
+																					// special msgId)
 
 	}// End Of Method
 
 	@RequestMapping(value = "/sendRandomCotent", method = RequestMethod.GET, headers = "Accept=*")
 	public @ResponseBody String sendRandomCotent(@RequestParam(value = "cli", required = false) String cli,
 			@RequestParam("msisdn") String msisdn, @RequestParam(value = "priority", required = false) Integer msgType,
-			@RequestParam("event") String event,
-			@RequestParam("service") String service,
+			@RequestParam("event") String event, @RequestParam("service") String service,
 			@RequestParam(value = "validate", required = false) Boolean validate,
 			@RequestParam(value = "unicode", required = false) Boolean unicode,
 			@RequestParam(value = "type", required = false) Integer smsType,
@@ -211,39 +213,38 @@ public class SMSController {
 			@RequestParam(value = "serviceid", required = false) String serviceid,
 			@RequestParam(value = "multiple", required = false) Boolean multiple,
 			@RequestParam(value = "session", required = false) Boolean session,
-			@RequestParam(value = "sessionEnd", required = false) Boolean sessionEnd, HttpServletRequest request) throws IOException {
+			@RequestParam(value = "sessionEnd", required = false) Boolean sessionEnd, HttpServletRequest request)
+			throws IOException {
 
 		String content = "";
 
-		Logger.sysLog(LogValues.info, this.getClass().getName(),
-				"Inside sendRandomCotent controller...");
-
+		Logger.sysLog(LogValues.info, this.getClass().getName(), "Inside sendRandomCotent controller...");
 
 		CoreUtils.loadMsgContents();
 
-		String contentKey = service+"_"+event;
+		String contentKey = service + "_" + event;
 		ArrayList<String> actions = CoreUtils.getContents(contentKey);
 		int actionsSize = actions.size();
 
 		Random random = new Random();
 		int rand = random.nextInt(actionsSize);
 
-		content = content+actions.get(rand);
+		content = content + actions.get(rand);
 
 		Logger.sysLog(LogValues.info, this.getClass().getName(),
-				"service: "+service + " | event: "+event+" | content: "+content);
+				"service: " + service + " | event: " + event + " | content: " + content);
 
 		return this.addSmsToQueue(cli, msisdn, msgType, content, validate, unicode, smsType, callback, circle,
 				reschedule, serviceType, dataCoding, script, flag, expiry, sync, extraDetail, serviceid, multiple,
-				session,null, sessionEnd, 0, false,null,null,null,0, request);   //Added for Dream Travel Mexico (since MT message required a special msgId)
+				session, null, sessionEnd, 0, false, null, null, null, 0, request); // Added for Dream Travel Mexico
+																					// (since MT message required a
+																					// special msgId)
 
 	}// End Of Method
 
 	@RequestMapping(value = "/sendSms", method = RequestMethod.GET)
-	public @ResponseBody String addSmsToQueue(
-			@RequestParam(value = "cli", required = false) String cli,
-			@RequestParam("msisdn") String msisdn,
-			@RequestParam(value = "priority", required = false) Integer msgType,
+	public @ResponseBody String addSmsToQueue(@RequestParam(value = "cli", required = false) String cli,
+			@RequestParam("msisdn") String msisdn, @RequestParam(value = "priority", required = false) Integer msgType,
 			@RequestParam("content") String content,
 			@RequestParam(value = "validate", required = false) Boolean validate,
 			@RequestParam(value = "unicode", required = false) Boolean unicode,
@@ -261,22 +262,20 @@ public class SMSController {
 			@RequestParam(value = "serviceid", required = false) String serviceid,
 			@RequestParam(value = "multiple", required = false) Boolean multiple,
 			@RequestParam(value = "session", required = false) Boolean session,
-			@RequestParam(value = "msgid", required = false) String msgid,  //Added for Dream Travel Mexico (since MT message required a special msgId)
+			@RequestParam(value = "msgid", required = false) String msgid, // Added for Dream Travel Mexico (since MT
+																			// message required a special msgId)
 			@RequestParam(value = "sessionEnd", required = false) Boolean sessionEnd,
 			@RequestParam(value = "delay", required = false) Integer delay,
 			@RequestParam(value = "discard", required = false) Boolean discard,
 			@RequestParam(value = "ussdOp", required = false) Integer ussdOp,
 			@RequestParam(value = "productId", required = false) String productid,
 			@RequestParam(value = "pricepointId", required = false) String pricepointid,
-			@RequestParam(value = "extra", required = false) Integer intExtra,
-			HttpServletRequest request) throws IOException {
+			@RequestParam(value = "extra", required = false) Integer intExtra, HttpServletRequest request)
+			throws IOException {
 
-		
 		smsQueueInitializer.initQueue();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String codes[] = CoreUtils.getProperty("countryCodes").split(",");
-		
-		
 
 		boolean sendMultiple = multiple == null ? false : multiple.booleanValue();
 		boolean syncRequest = sync == null ? false : sync.booleanValue();
@@ -295,31 +294,28 @@ public class SMSController {
 			send = false;
 		}
 
-
-		if(discard != null && discard.booleanValue()) {
+		if (discard != null && discard.booleanValue()) {
 			String sDc = CoreUtils.getProperty("discard_percent");
-			Decline dc = Decline.getInstance(sDc==null?0:Integer.parseInt(sDc));
+			Decline dc = Decline.getInstance(sDc == null ? 0 : Integer.parseInt(sDc));
 
-			if(dc.isRejected()) {
+			if (dc.isRejected()) {
 				result = "Discarded";
 				send = false;
-				Logger.sysLog(LogValues.info, this.getClass().getName(), msisdn+" Message Discarded "+content);
+				Logger.sysLog(LogValues.info, this.getClass().getName(), msisdn + " Message Discarded " + content);
 			}
 		}
 
 		long ldelay = 0;
-		if(delay!=null && delay>0) {
+		if (delay != null && delay > 0) {
 			ldelay = delay * 1000;
 		}
 
-		//burkinaFaso
-		if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) {
-			if(CoreUtils.token1 == null || CoreUtils.token2 == null) {
+		// burkinaFaso
+		if (CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) {
+			if (CoreUtils.token1 == null || CoreUtils.token2 == null) {
 				CoreUtils.generateAndSaveToken();
 			}
 		}
-		
-		
 
 		if (smsType != null) {
 			smsTypeValue = smsType.intValue();
@@ -329,7 +325,6 @@ public class SMSController {
 			}
 		}
 
-		
 		if ((RedisConnection.expiryTimer > 0) && smsTypeValue == CoreEnums.Type.MT.ordinal()) {
 
 			Jedis jedis = null;
@@ -367,13 +362,14 @@ public class SMSController {
 				result = "NullAgrumentsFound";
 				send = false;
 			}
-		} 
-		
-		if(CoreUtils.getProperty("country").equals("Syria") && CoreUtils.getProperty("operator").equals("MTN")
-				&& CoreUtils.getProperty("protocol").equals("HTTP")) 
-		{
-			if(SMSController.fetchOptionalParamater(request, "language").equalsIgnoreCase("_A")) msgid = "0";
-			else msgid = "1";
+		}
+
+		if (CoreUtils.getProperty("country").equals("Syria") && CoreUtils.getProperty("operator").equals("MTN")
+				&& CoreUtils.getProperty("protocol").equals("HTTP")) {
+			if (SMSController.fetchOptionalParamater(request, "language").equalsIgnoreCase("_A"))
+				msgid = "0";
+			else
+				msgid = "1";
 		}
 
 		if (validate != null) {
@@ -403,10 +399,9 @@ public class SMSController {
 
 		} // End Of Validation IF
 
-		/*if (!CoreUtils.isWhitelisted(cli, msisdn, "MT")) {
-			result = "NotWhitelisted";
-			send = false;
-		}
+		/*
+		 * if (!CoreUtils.isWhitelisted(cli, msisdn, "MT")) { result = "NotWhitelisted";
+		 * send = false; }
 		 */
 		boolean callBack = false;
 
@@ -419,7 +414,7 @@ public class SMSController {
 		if (session != null) {
 			ussdSession = session.booleanValue();
 		}
-		
+
 		boolean isSessionInactive = false;
 
 		if (sessionEnd != null) {
@@ -438,8 +433,12 @@ public class SMSController {
 
 		}
 
-		/*log added for finding which queue we are pushing the message when problem occurred in NCell*/
-		//		Logger.sysLog(LogValues.info, this.getClass().getName(), "The queue for msisdn: " + msisdn + " is: smsqueue" + type);
+		/*
+		 * log added for finding which queue we are pushing the message when problem
+		 * occurred in NCell
+		 */
+		// Logger.sysLog(LogValues.info, this.getClass().getName(), "The queue for
+		// msisdn: " + msisdn + " is: smsqueue" + type);
 
 		if (circle != null && circle.trim().length() != 0) {
 			circle = circle.toUpperCase().trim();
@@ -458,7 +457,6 @@ public class SMSController {
 		 * Synchronous Request | Only Warning is given ELSE SMS is pushed at the end of
 		 * current Blackout Hour, the SMS is sent Randomly within an Hour period
 		 */
-
 
 		boolean blackedOut = false;
 		if (type != SMSType.Service.ordinal()) {
@@ -493,7 +491,7 @@ public class SMSController {
 						" WARNING:- [Pushing SMS] Within Blackout Hours... ");
 			} // End Of Blackout Hour Check
 
-		} else if(blackoutenable) {  //Airtel Malawi
+		} else if (blackoutenable) { // Airtel Malawi
 
 			Date now = new Date();
 			blackedOut = CoreUtils.withinBlackoutHours(now);
@@ -509,11 +507,12 @@ public class SMSController {
 					diffInMillis = bhEnd.getTime() - now.getTime();
 					diffInMillis += rand.nextInt(10 * minute) + 1000;
 					diffMins = (int) (diffInMillis / (long) minute);
-					type = 3; //Airtel Malawi
-					send = true; //Airtel Malawi
+					type = 3; // Airtel Malawi
+					send = true; // Airtel Malawi
 					Logger.sysLog(LogValues.info, this.getClass().getName(),
 							"Currently In Blackout Hour | SMS Scheduled after " + diffMins + " Mins ");
-					//					Logger.sysLog(LogValues.info, this.getClass().getName(), "The queue for msisdn: " + msisdn + " is changed to: smsqueue" + type);  //Airtel Malawi
+					// Logger.sysLog(LogValues.info, this.getClass().getName(), "The queue for
+					// msisdn: " + msisdn + " is changed to: smsqueue" + type); //Airtel Malawi
 
 				} else {
 					Logger.sysLog(LogValues.warn, this.getClass().getName(),
@@ -527,14 +526,7 @@ public class SMSController {
 						" WARNING:- [Pushing SMS] Within Blackout Hours... ");
 			} // End Of Blackout Hour Check
 
-
-		}// End of Priority Check
-
-
-
-
-
-
+		} // End of Priority Check
 
 		if (send == true && msisdn != null && content != null && msisdn.length() != 0 && content.length() != 0) {
 
@@ -550,46 +542,36 @@ public class SMSController {
 						Message msg = new Message(cli, msisdn, type, contentArray[i], mode.ordinal(), smsTypeValue);
 						msg.setCircle(circle);
 						msg.setFlag(smsflag);
-                          System.out.println("type ="+type);
+						System.out.println("type =" + type);
 						msg.setTxnid(Long.toString(msg.getTime()));
-						
+
 						msg.setProductid(productid);
 						msg.setPricepointid(pricepointid);
-						//Burkina Faso
-						if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) 
-						{
-							if(cli.equals("399") || cli.equals("226399")) 
-							{
-								if(CoreUtils.token1 == null) {
+						// Burkina Faso
+						if (CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) {
+							if (cli.equals("399") || cli.equals("226399")) {
+								if (CoreUtils.token1 == null) {
 									CoreUtils.generateAndSaveToken();
 									msg.setToken(CoreUtils.token1);
 									msg.setSenderName("Islamic");
 								} else {
 									msg.setToken(CoreUtils.token1);
-									msg.setSenderName("Islamic");									
+									msg.setSenderName("Islamic");
 								}
-							} 
-							else if(cli.equals("145") || cli.equals("226145")) 
-							{
-								if(CoreUtils.token2 == null) 
-								{
+							} else if (cli.equals("145") || cli.equals("226145")) {
+								if (CoreUtils.token2 == null) {
 									CoreUtils.generateAndSaveToken();
 									msg.setToken(CoreUtils.token2);
 									msg.setSenderName("MagicVoice");
-								} else 
-								{
+								} else {
 									msg.setToken(CoreUtils.token2);
 									msg.setSenderName("MagicVoice");
 								}
 							}
 						}
 
-
-
-
-
-						//Mexico
-						if(msgid != null)
+						// Mexico
+						if (msgid != null)
 							msg.setMsgid(msgid);
 
 						if (serviceid != null && serviceid.length() > 0)
@@ -640,7 +622,7 @@ public class SMSController {
 							String message = SMSController.convertTexttoUnicode(contentArray[i], script);
 							msg.setMessage(message);
 						}
-						
+
 						if (ussdSession) {
 							SessionParameters sessParams = new SessionParameters();
 
@@ -651,14 +633,14 @@ public class SMSController {
 							}
 
 							String sessionId = request.getSession().getId();
-							if(request.getParameter("sessionid") != null)
+							if (request.getParameter("sessionid") != null)
 								sessParams.setItsSessionInfo(Integer.parseInt(request.getParameter("sessionid")));
 							else
 								sessParams.setItsSessionInfo(Integer.parseInt(sessionId));
-							if(ussdOp != null)
+							if (ussdOp != null)
 								sessParams.setUssdServiceOp(ussdOp);
 							else
-								sessParams.setUssdServiceOp(2);	
+								sessParams.setUssdServiceOp(2);
 
 							msg.setOptionalSessParams(sessParams);
 
@@ -709,39 +691,30 @@ public class SMSController {
 
 					Message msg = new Message(cli, msisdn, type, content, mode.ordinal(), smsTypeValue);
 
-					
-					if(content.contains("$uid$"))
-					{
-						
+					if (content.contains("$uid$")) {
+
 						String phraseToEncrypt = CoreUtils.getProperty("uid");
-						
-						String finalmsisdn =  CoreUtils.stripCodes(msisdn);
-						
-						
-					content=	CoreUtils.getUid(finalmsisdn);
-						
+
+						String finalmsisdn = CoreUtils.stripCodes(msisdn);
+
+						content = CoreUtils.getUid(finalmsisdn);
+
 					}
-					
-					
-					System.out.println("content "+content);
-					
-					
-					
-					
-					
-					
+
+					System.out.println("content " + content);
+
 					msg.setCircle(circle);
 					msg.setFlag(smsflag);
 
 					msg.setTxnid(Long.toString(msg.getTime()));
-					
+
 					msg.setProductid(productid);
 					msg.setPricepointid(pricepointid);
-					if(msgid != null) 
-					{
-						msg.setMsgid(msgid);  //Added for Dream Travel Mexico (since MT message required a special msgId)
+					if (msgid != null) {
+						msg.setMsgid(msgid); // Added for Dream Travel Mexico (since MT message required a special
+												// msgId)
 					}
-					
+
 //					//Burkina Faso
 //					if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) 
 //					{
@@ -767,9 +740,7 @@ public class SMSController {
 //						}
 //					}
 
-
-					Logger.sysLog(LogValues.info, this.getClass().getName(),
-							" msgid set is: " + msg.getMsgid());
+					Logger.sysLog(LogValues.info, this.getClass().getName(), " msgid set is: " + msg.getMsgid());
 
 					if (serviceid != null && serviceid.length() > 0)
 						msg.setServiceid(serviceid);
@@ -814,7 +785,7 @@ public class SMSController {
 						Logger.sysLog(LogValues.info, this.getClass().getName(),
 								" ExpiryTime=" + msg.getExpiryTime().toString());
 					}
-					
+
 					String param = SMSController.fetchOptionalParamater(request, "language");
 					if (OptionalParameters.SET(msg, param) == false) {
 						String message = SMSController.convertTexttoUnicode(content, script);
@@ -826,14 +797,14 @@ public class SMSController {
 
 						String sessionId = request.getSession().getId();
 
-						if(request.getParameter("sessionid") != null)
+						if (request.getParameter("sessionid") != null)
 							sessParams.setItsSessionInfo(Integer.parseInt(request.getParameter("sessionid")));
 						else
 							sessParams.setItsSessionInfo(Integer.parseInt(sessionId));
-						if(ussdOp != null)
+						if (ussdOp != null)
 							sessParams.setUssdServiceOp(ussdOp);
 						else
-							sessParams.setUssdServiceOp(2);	
+							sessParams.setUssdServiceOp(2);
 
 						sessParams.setSessionInactive(0);
 
@@ -894,25 +865,25 @@ public class SMSController {
 					msg.setCircle(circle);
 
 					msg.setTxnid(Long.toString(msg.getTime()));
-					
+
 					msg.setProductid(productid);
 					msg.setPricepointid(pricepointid);
-					if(msgid != null)
-						msg.setMsgid(msgid); //Mexico
+					if (msgid != null)
+						msg.setMsgid(msgid); // Mexico
 
-					//Burkina Faso
-					if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) {
-						if(cli.equals("399") || cli.equals("226399")) {
-							if(CoreUtils.token1 == null) {
+					// Burkina Faso
+					if (CoreUtils.getProperty("country").equalsIgnoreCase("bfa")) {
+						if (cli.equals("399") || cli.equals("226399")) {
+							if (CoreUtils.token1 == null) {
 								CoreUtils.generateAndSaveToken();
 								msg.setToken(CoreUtils.token1);
 								msg.setSenderName("Islamic");
 							} else {
 								msg.setToken(CoreUtils.token1);
-								msg.setSenderName("Islamic");									
+								msg.setSenderName("Islamic");
 							}
-						} else if(cli.equals("145") || cli.equals("226145")) {
-							if(CoreUtils.token2 == null) {
+						} else if (cli.equals("145") || cli.equals("226145")) {
+							if (CoreUtils.token2 == null) {
 								CoreUtils.generateAndSaveToken();
 								msg.setToken(CoreUtils.token2);
 								msg.setSenderName("MagicVoice");
@@ -923,18 +894,17 @@ public class SMSController {
 						}
 					}
 
-
 					if (serviceid != null && serviceid.length() > 0)
 						msg.setServiceid(serviceid);
-					
+
 					if (extraDetail != null && extraDetail.length() > 0) {
 						msg.setExtraDetail(extraDetail.trim());
 					}
 
-					//SmsCdrBean smsCdr = CoreUtils.getSmsCDR(msg);
+					// SmsCdrBean smsCdr = CoreUtils.getSmsCDR(msg);
 					Date now = new Date(msg.getTime());
-					//smsCdr.setSubmittime(sdf.format(now));
-			//		smsCdr.setMessageId(SMSController.DefaultMessageID);
+					// smsCdr.setSubmittime(sdf.format(now));
+					// smsCdr.setMessageId(SMSController.DefaultMessageID);
 
 //					if (CdrCreator.isJsonCDR()) {
 //						smsCdr.setStatus("Failure " + result);
@@ -945,7 +915,7 @@ public class SMSController {
 					Logger.sysLog(LogValues.warn, this.getClass().getName(),
 							" Unable to Push SMS for msisdn= " + msisdn + " | content= " + content + " | time= "
 									+ now.toString() + " | reason= " + result + ".  [CDR successfully created] ");
-					//CdrCreator.saveAsXML(smsCdr);
+					// CdrCreator.saveAsXML(smsCdr);
 					result = "Failure";
 
 					/**
@@ -967,16 +937,15 @@ public class SMSController {
 				msg.setCircle(circle);
 
 				msg.setTxnid(Long.toString(msg.getTime()));
-				
+
 				msg.setProductid(productid);
 				msg.setPricepointid(pricepointid);
 				if (serviceid != null && serviceid.length() > 0)
 					msg.setServiceid(serviceid);
 
+				if (msgid != null)
+					msg.setMsgid(msgid); // Mexico
 
-				if(msgid != null) 
-					msg.setMsgid(msgid); //Mexico
-				
 				if (extraDetail != null && extraDetail.length() > 0) {
 					msg.setExtraDetail(extraDetail.trim());
 				}
@@ -1004,7 +973,6 @@ public class SMSController {
 //					}
 //				}
 
-
 //				SmsCdrBean smsCdr = CoreUtils.getSmsCDR(msg);
 				Date now = new Date(msg.getTime());
 //				smsCdr.setSubmittime(sdf.format(now));
@@ -1019,7 +987,7 @@ public class SMSController {
 				Logger.sysLog(LogValues.warn, this.getClass().getName(),
 						" Unable to Push SMS for msisdn= " + msisdn + " | content= " + content + " | time= "
 								+ now.toString() + " | reason= " + result + ".  [CDR successfully created] ");
-				//CdrCreator.saveAsXML(smsCdr);
+				// CdrCreator.saveAsXML(smsCdr);
 				result = "Failure";
 
 				/**
@@ -1044,18 +1012,14 @@ public class SMSController {
 	 * GET Request Mapping, used for testing sendSms API locally
 	 */
 	@RequestMapping(value = "/testsendSms", method = RequestMethod.GET)
-	public @ResponseBody String testsendSmsLocally(
-			@RequestParam(value = "cli") String shortcode,
-			@RequestParam(value = "msisdn") String msisdn, 
-			@RequestParam(value = "message") String message,
-			@RequestParam(value = "type") String type,
-			@RequestParam(value = "msdid") String msgid) {
+	public @ResponseBody String testsendSmsLocally(@RequestParam(value = "cli") String shortcode,
+			@RequestParam(value = "msisdn") String msisdn, @RequestParam(value = "message") String message,
+			@RequestParam(value = "type") String type, @RequestParam(value = "msdid") String msgid) {
 
 		String response = "Hello";
 
 		return "response: " + response + " message: " + message + " cli: " + shortcode + " msisdn: " + msisdn;
 	}
-
 
 	/**
 	 * POST Request Mapping, used for handling SMS Promotions
@@ -1087,9 +1051,6 @@ public class SMSController {
 
 		promotion = new SmsPromotion(promotionName, smsText, callerId, circle);
 		Calendar cal = Calendar.getInstance();
-		
-		
-
 
 		if (serviceid != null && serviceid.length() > 0)
 			promotion.setServiceid(serviceid);
@@ -1104,8 +1065,7 @@ public class SMSController {
 			promotion.setProtocol(protocol.intValue());
 		}
 
-		if (startDate != null && startTime != null) 
-		{
+		if (startDate != null && startTime != null) {
 			String startDateTime = startDate + " " + startTime + ":00.000";
 			Date sDateTime = CoreUtils.getDate(startDateTime);
 
@@ -1277,8 +1237,7 @@ public class SMSController {
 	 */
 	@RequestMapping(value = "/addMO", method = RequestMethod.POST)
 	public @ResponseBody String addMOKeyword(@RequestParam(value = "action") String action,
-			@RequestParam("shcode") String shortcode, 
-			@RequestParam("keyword") String keyword,
+			@RequestParam("shcode") String shortcode, @RequestParam("keyword") String keyword,
 			@RequestParam("type") String type, HttpServletRequest request, HttpServletResponse resp) {
 
 		String result = "";
@@ -1357,12 +1316,11 @@ public class SMSController {
 		return result;
 	}// End Of Request Mapping
 
-
 	public String addMTResponse(MtResponse mtresponse) {
 
 		String result = "failed";
 
-		if(SMSController.validation.addMtResponse(mtresponse)) {
+		if (SMSController.validation.addMtResponse(mtresponse)) {
 			result = "success";
 		}
 		return result;
@@ -1444,13 +1402,13 @@ public class SMSController {
 		Logger.sysLog(LogValues.info, this.getClass().getName(),
 				"Message received: " + message + " responseType: " + responseType);
 
-		return this.receiveMoGET(msisdn, message, cli, serviceType, responseType, null,source,null,null,null,null,null); //Added for Dream Travel Mexico (since MT message required a special msgId)
+		return this.receiveMoGET(msisdn, message, cli, serviceType, responseType, null, source, null, null, null, null,
+				null); // Added for Dream Travel Mexico (since MT message required a special msgId)
 	}// End of Request Mapping
 
-	@RequestMapping(value = "/receiveMO", method = RequestMethod.GET )
-	public @ResponseBody String receiveMoGET(
-			@RequestParam(value = "msisdn", required = false) String msisdn,
-			@RequestParam(value = "message", required = false) String message, 
+	@RequestMapping(value = "/receiveMO", method = RequestMethod.GET)
+	public @ResponseBody String receiveMoGET(@RequestParam(value = "msisdn", required = false) String msisdn,
+			@RequestParam(value = "message", required = false) String message,
 			@RequestParam(value = "cli", required = false) String cli,
 			@RequestParam(value = "serviceType", required = false) String serviceType,
 			@RequestParam(value = "responseType", required = false) String responseType,
@@ -1460,42 +1418,38 @@ public class SMSController {
 			@RequestParam(value = "X-Dest-Addr", required = false) String X_Dest_Addr,
 			@RequestParam(value = "X-Pull-Trx-Id", required = false) String X_Pull_Trx_Id,
 			@RequestParam(value = "_SC", required = false) String SC,
-			@RequestParam(value = "_TID", required = false) String TID){
-		//Added for Dream Travel Mexico (since MT message required a special msgId)
+			@RequestParam(value = "_TID", required = false) String TID) {
+		// Added for Dream Travel Mexico (since MT message required a special msgId)
 		ReceivedSmsBean cdr = new ReceivedSmsBean();
 		cdr.setStatus("Success");
 		cdr.setDeliveryReport(false);
 		cdr.setTime(CoreUtils.getCurrentTimeStamp());
 
-		if(CoreUtils.getProperty("country").equals("Indonesia") && CoreUtils.getProperty("operator").equals("XL")
-				&& CoreUtils.getProperty("protocol").equals("HTTP"))
-		{
+		if (CoreUtils.getProperty("country").equals("Indonesia") && CoreUtils.getProperty("operator").equals("XL")
+				&& CoreUtils.getProperty("protocol").equals("HTTP")) {
 
 			msisdn = X_Source_Addr;
 			cli = X_Dest_Addr;
 			message = SC;
 
-			Logger.sysLog(LogValues.info, this.getClass().getName(), "Received MO:  X-Source-Addr , X-Dest-Addr , X-Pull-Trx-Id , "
-					+ " _SC , _TID => " + X_Source_Addr + " , " + X_Dest_Addr + " , " + X_Pull_Trx_Id + " , "+ SC + " , " + TID);
+			Logger.sysLog(LogValues.info, this.getClass().getName(),
+					"Received MO:  X-Source-Addr , X-Dest-Addr , X-Pull-Trx-Id , " + " _SC , _TID => " + X_Source_Addr
+							+ " , " + X_Dest_Addr + " , " + X_Pull_Trx_Id + " , " + SC + " , " + TID);
 		}
 
-
-		if(source != null)
+		if (source != null)
 			cdr.setMode(source);
 
-		Logger.sysLog(LogValues.info, this.getClass().getName(), "Message received: " +message);
+		Logger.sysLog(LogValues.info, this.getClass().getName(), "Message received: " + message);
 
-		//Added for Dream Travel Mexico (since MT message required a special msgId)		
-		if(msgid != null) 
-		{
+		// Added for Dream Travel Mexico (since MT message required a special msgId)
+		if (msgid != null) {
 			cdr.setMsgid(msgid);
 			Logger.sysLog(LogValues.info, this.getClass().getName(), "message_id is: " + msgid);
 		}
 
-		if (responseType != null)
-		{
-			if (responseType.equalsIgnoreCase("xml") && !message.equals("")) 
-			{
+		if (responseType != null) {
+			if (responseType.equalsIgnoreCase("xml") && !message.equals("")) {
 
 				Logger.sysLog(LogValues.info, this.getClass().getName(), "Response type : xml");
 
@@ -1514,9 +1468,7 @@ public class SMSController {
 				cli = moFormat.getInboundMessage().get(0).getDestinationAddress().trim();
 				// }
 
-			} 
-			else if (responseType.equalsIgnoreCase("soap"))
-           {
+			} else if (responseType.equalsIgnoreCase("soap")) {
 				int startIndex = message.indexOf("<ns2:message>");
 
 				if (startIndex != -1) {
@@ -1551,7 +1503,7 @@ public class SMSController {
 				" MO Received :: [" + msisdn + "] [" + cli + "]::  Message=" + receivedMessage);
 
 		SmsValidation validator = new SmsValidation();
-		validator.init(); //rk for self
+		validator.init(); // rk for self
 		validator.parseAndValidate(receivedMessage, cdr);
 
 		return "Success";
@@ -1561,10 +1513,8 @@ public class SMSController {
 	// changes in receive mo according to orange egypt added mo as mapping
 
 	@RequestMapping(value = "/mo", method = RequestMethod.GET, produces = "application/xml")
-	public  @ResponseBody String moGET(
-			@RequestParam(value = "msisdn", required = true) String msisdn,
-			@RequestParam("action") String message, 
-			@RequestParam(value = "ServiceID", required = false) String cli,
+	public @ResponseBody String moGET(@RequestParam(value = "msisdn", required = true) String msisdn,
+			@RequestParam("action") String message, @RequestParam(value = "ServiceID", required = false) String cli,
 			@RequestParam(value = "serviceType", required = false) String serviceType,
 			@RequestParam(value = "responseType", required = false) String responseType,
 			@RequestParam(value = "Extra", required = false) String extra,
@@ -1577,10 +1527,8 @@ public class SMSController {
 
 		Logger.sysLog(LogValues.info, this.getClass().getName(), "Message received: " + message);
 
-		if (responseType != null) 
-		{
-			if (responseType.equalsIgnoreCase("xml") && !message.equals("")) 
-			{
+		if (responseType != null) {
+			if (responseType.equalsIgnoreCase("xml") && !message.equals("")) {
 
 				Logger.sysLog(LogValues.info, this.getClass().getName(), "Response type : xml");
 
@@ -1599,8 +1547,7 @@ public class SMSController {
 				cli = moFormat.getInboundMessage().get(0).getDestinationAddress().trim();
 				// }
 
-			} else if (responseType.equalsIgnoreCase("soap"))
-			{
+			} else if (responseType.equalsIgnoreCase("soap")) {
 				int startIndex = message.indexOf("<ns2:message>");
 
 				if (startIndex != -1) {
@@ -1635,75 +1582,70 @@ public class SMSController {
 				" MO Received :: [" + msisdn + "] [" + cli + "]::  Message=" + receivedMessage);
 
 		SmsValidation validator = new SmsValidation();
-		
+
 		validator.parseAndValidate(receivedMessage, cdr);
 
 		return "Success";
 
 	}// End of Request Mapping
 
-
-	/*receive mo for dream travel service Mexico*/
+	/* receive mo for dream travel service Mexico */
 
 	@RequestMapping(value = "/receivemo", method = RequestMethod.POST)
-	public @ResponseBody String receiveMoPost(@RequestBody String request)
-	{
+	public @ResponseBody String receiveMoPost(@RequestBody String request) {
 
 		Logger.sysLog(LogValues.info, this.getClass().getName(), "xml received: " + request);
 		Request_data reqData = (Request_data) XmlParser.parseXml(request, new Request_data());
 
-		Logger.sysLog(LogValues.info, this.getClass().getName(), "msisdn is: " + reqData.getIdentifier() + " ,Message received: " + reqData.getMessage() + " ,message_id received: " + reqData.getMessage_id());	
+		Logger.sysLog(LogValues.info, this.getClass().getName(), "msisdn is: " + reqData.getIdentifier()
+				+ " ,Message received: " + reqData.getMessage() + " ,message_id received: " + reqData.getMessage_id());
 
-		receiveMoGET(reqData.getIdentifier(), reqData.getMessage(), reqData.getShortcode(), null, null, String.valueOf(reqData.getMessage_id()),null,
-				null,null,null,null,null);
+		receiveMoGET(reqData.getIdentifier(), reqData.getMessage(), reqData.getShortcode(), null, null,
+				String.valueOf(reqData.getMessage_id()), null, null, null, null, null, null);
 
-		return "<request_data>\n" + 
-		"<result_code>200</result_code>\n" + 
-		"</request_data>";
+		return "<request_data>\n" + "<result_code>200</result_code>\n" + "</request_data>";
 
 	}
-	/*end of receive mo for dream travel service Mexico*/
+	/* end of receive mo for dream travel service Mexico */
 
 	@RequestMapping(value = "mtnsyria/mo", method = RequestMethod.GET)
 	public @ResponseBody String receiveMoForMtnsyria(@RequestParam(value = "GSM", required = false) String msisdn,
 			@RequestParam(value = "msg", required = false) String message,
 			@RequestParam(value = "lang", required = false) String language,
 			@RequestParam(value = "SC", required = false) String cli) {
-		
-		if(msisdn == null || cli == null || message == null) {
-			Logger.sysLog(LogValues.warn, this.getClass().getName(), "Request Failed because required parameters are missing, msisdn:"
-		+ msisdn + " ,cli: " + cli + " ,message: " + message);	
-			
+
+		if (msisdn == null || cli == null || message == null) {
+			Logger.sysLog(LogValues.warn, this.getClass().getName(),
+					"Request Failed because required parameters are missing, msisdn:" + msisdn + " ,cli: " + cli
+							+ " ,message: " + message);
+
 			return "Failure";
 		}
-		return receiveMoGET(msisdn, message, cli, null, null, null,null,
-				null,null,null,null,null);
+		return receiveMoGET(msisdn, message, cli, null, null, null, null, null, null, null, null, null);
 	}
 
-	/*receive mo for Burkina Faso*/
+	/* receive mo for Burkina Faso */
 	@RequestMapping(value = "burkinafaso/receivemo", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody String receivemoBrukinaFaso(@RequestBody String request) {
 		Logger.sysLog(LogValues.info, this.getClass().getName(), "json received in case of mo is: " + request);
 		JsonParser jsonParser = new JsonParser();
 		JsonElement jsonTree = jsonParser.parse(request);
 		JsonElement inboundSMSMessageNotification = null;
-		if(jsonTree.isJsonObject()) {
+		if (jsonTree.isJsonObject()) {
 			JsonObject jsonObject = jsonTree.getAsJsonObject();
 			inboundSMSMessageNotification = jsonObject.get("inboundSMSMessageNotification");
-			//			System.out.println(inboundSMSMessageNotification.toString());
+			// System.out.println(inboundSMSMessageNotification.toString());
 		}
 
 		JsonElement jsonElement = jsonParser.parse(inboundSMSMessageNotification.toString());
 		JsonElement inboundSMSMessage = null;
-		if(jsonElement.isJsonObject()) {
+		if (jsonElement.isJsonObject()) {
 			JsonObject jsonObject = jsonElement.getAsJsonObject();
 			inboundSMSMessage = jsonObject.get("inboundSMSMessage");
-			//			System.out.println(inboundSMSMessage.toString());
+			// System.out.println(inboundSMSMessage.toString());
 		}
 
 		JsonObject jsonObject = inboundSMSMessage.getAsJsonObject();
-
-
 
 		String destinationAddress = null;
 		String senderAddress = null;
@@ -1714,25 +1656,21 @@ public class SMSController {
 
 		temp = jsonObject.get("destinationAddress").toString();
 		len = temp.length();
-		destinationAddress = temp.substring(5, len -1);
+		destinationAddress = temp.substring(5, len - 1);
 
 		temp = jsonObject.get("senderAddress").toString();
 		len = temp.length();
-		senderAddress = temp.substring(5, len -1);
+		senderAddress = temp.substring(5, len - 1);
 
 		temp = jsonObject.get("message").toString();
 		len = temp.length();
-		message = temp.substring(1, len -1);
+		message = temp.substring(1, len - 1);
 
-
-		receiveMoGET(senderAddress, message, destinationAddress, null, null, null,null,
-				null,null,null,null,null);
+		receiveMoGET(senderAddress, message, destinationAddress, null, null, null, null, null, null, null, null, null);
 		return "{204 No Content}";
 	}
-	/*end of receive mo for Burkina Faso*/
+	/* end of receive mo for Burkina Faso */
 
-
-	
 	/**
 	 * GET/POST Request Mapping, used by Operator to push DR via HTTP request
 	 * 
@@ -1775,9 +1713,9 @@ public class SMSController {
 					"Error in reading from input stream : " + Logger.getStack(e));
 		}
 
-		return this.receiveDrGET(sender, status, receiver, serviceType, responseType, message, messageId,null,null,null,null,null,null, request);
+		return this.receiveDrGET(sender, status, receiver, serviceType, responseType, message, messageId, null, null,
+				null, null, null, null, request);
 	}// End of Request Mapping
-
 
 	/**
 	 * GET/POST Request Mapping, used by Operator to push DR via HTTP request
@@ -1810,9 +1748,9 @@ public class SMSController {
 					"Error in reading from input stream : " + Logger.getStack(e));
 		}
 
-		return this.receiveDrGET(sender, status, receiver, serviceType, responseType, message, messageId,null,null,null,null,null,null, request);
+		return this.receiveDrGET(sender, status, receiver, serviceType, responseType, message, messageId, null, null,
+				null, null, null, null, request);
 	}// End of Request Mapping
-
 
 	@RequestMapping(value = "/receiveDR", method = RequestMethod.GET)
 	public @ResponseBody String receiveDrGET(@RequestParam(value = "sender", required = false) String sender,
@@ -1827,17 +1765,16 @@ public class SMSController {
 			@RequestParam(value = "dtdone", required = false) String dtdone,
 			@RequestParam(value = "errorcode", required = false) String errorcode,
 			@RequestParam(value = "errordescription", required = false) String errordescription,
-			@RequestParam(value = "extraDetail", required = false) String extraDetail,
-			HttpServletRequest request) {
+			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request) {
 
 		ReceivedSmsBean cdr = new ReceivedSmsBean();
 
-		try{
+		try {
 			cdr.setDeliveryReport(true);
 			cdr.setTime(CoreUtils.getCurrentTimeStamp());
 			String msisdn = "";
 
-			if(CoreUtils.getProperty("country").equals("Indonesia") && CoreUtils.getProperty("operator").equals("XL")
+			if (CoreUtils.getProperty("country").equals("Indonesia") && CoreUtils.getProperty("operator").equals("XL")
 					&& CoreUtils.getProperty("protocol").equals("HTTP")) {
 
 				MtResponse mtresponse = null;
@@ -1848,7 +1785,7 @@ public class SMSController {
 				String status1 = "";
 				String action = "";
 
-				if(tid != null) {
+				if (tid != null) {
 
 					mtresponse = SMSController.validation.getMTResponse(tid);
 
@@ -1857,10 +1794,9 @@ public class SMSController {
 					serviceid = mtresponse.getServiceid();
 					subserviceid = mtresponse.getSubserviceid();
 
-					if(status_id != null) {  //Hitting DLR_provisoningUrl
+					if (status_id != null) { // Hitting DLR_provisoningUrl
 
-						if(status_id.equals("102")) 
-						{
+						if (status_id.equals("102")) {
 							status = "success";
 							status1 = "active";
 							action = "renew";
@@ -1875,21 +1811,26 @@ public class SMSController {
 
 						sender = msisdn;
 						receiver = cli;
-						
-						Logger.sysLog(LogValues.info, this.getClass().getName(), "received tid, status_id , dtdone , errorcode , errordescription , sender , receiver: "+ tid + " , " + status_id
-								+ " , " + dtdone + " , " + errorcode + " , " + errordescription + " , " + msisdn + " , " + cli);
 
-						requestData = "&msisdn="+msisdn+"&transactionID="+tid+"&subServiceId="+subserviceid+"&status="+status1+"&action="+action;
+						Logger.sysLog(LogValues.info, this.getClass().getName(),
+								"received tid, status_id , dtdone , errorcode , errordescription , sender , receiver: "
+										+ tid + " , " + status_id + " , " + dtdone + " , " + errorcode + " , "
+										+ errordescription + " , " + msisdn + " , " + cli);
+
+						requestData = "&msisdn=" + msisdn + "&transactionID=" + tid + "&subServiceId=" + subserviceid
+								+ "&status=" + status1 + "&action=" + action;
 					}
 				}
 
-				else if(sender != null && extraDetail != null) { //Here extraDetail is subserviceId
+				else if (sender != null && extraDetail != null) { // Here extraDetail is subserviceId
 
-					Logger.sysLog(LogValues.info, this.getClass().getName(), "Hitting in socket exception internally DR Called for msisdn : "  +sender);
+					Logger.sysLog(LogValues.info, this.getClass().getName(),
+							"Hitting in socket exception internally DR Called for msisdn : " + sender);
 
 					status1 = "grace";
 					action = "grace";
-					requestData = "&msisdn="+sender+"&transactionID=&subServiceId="+extraDetail+"&status="+status1+"&action="+action;
+					requestData = "&msisdn=" + sender + "&transactionID=&subServiceId=" + extraDetail + "&status="
+							+ status1 + "&action=" + action;
 				}
 
 				else {
@@ -1900,34 +1841,32 @@ public class SMSController {
 				try {
 					url = CoreUtils.getProperty("DLR_provisoningUrl");
 
-					if(url != null  && url.length() > 0) {
+					if (url != null && url.length() > 0) {
 
-						url +=  requestData;
+						url += requestData;
 
-						Logger.sysLog(LogValues.info, this.getClass().getName(), "DLR_provisoningUrl: "+url );
+						Logger.sysLog(LogValues.info, this.getClass().getName(), "DLR_provisoningUrl: " + url);
 
-						Message msg = new Message(receiver,sender,0,"DR", 3, 1);
+						Message msg = new Message(receiver, sender, 0, "DR", 3, 1);
 						HttpGateway g = new HttpGateway();
 						g.sendGETRequest(url, msg);
-					}
-					else {
+					} else {
 						Logger.sysLog(LogValues.error, this.getClass().getName(), "DLR_provisoningUrl hit null in db ");
 					}
-				}
-				catch(Exception e) {
-					Logger.sysLog(LogValues.error, this.getClass().getName(), "DLR_provisoningUrl hit false because of the satus: "+cdr.getStatus() );
+				} catch (Exception e) {
+					Logger.sysLog(LogValues.error, this.getClass().getName(),
+							"DLR_provisoningUrl hit false because of the satus: " + cdr.getStatus());
 				}
 
-			}
-			else {
-				Logger.sysLog(LogValues.info, this.getClass().getName(), "Delivery failed for user : "  +msisdn);
+			} else {
+				Logger.sysLog(LogValues.info, this.getClass().getName(), "Delivery failed for user : " + msisdn);
 				status = "failed";
 			}
 
 			if (responseType != null) {
 				if (responseType.equalsIgnoreCase("xml") && !message.equals("")) {
 
-					//itika: xml parse
+					// itika: xml parse
 					DeliveryInfoNotification notification = (DeliveryInfoNotification) XmlParser.parseXml(status,
 							new DeliveryInfoNotification());
 					cdr.setReceiverMsisdn("");
@@ -1969,25 +1908,23 @@ public class SMSController {
 
 			SmsValidation validator = new SmsValidation();
 			validator.parseAndValidate(message, cdr);
-		}
-		catch(Exception e) {
+		} catch (Exception e) {
 		}
 		return "Success";
 
 	}// End of Request Mapping
 
-
-	/*receive dr for Burkina Faso*/
+	/* receive dr for Burkina Faso */
 	@RequestMapping(value = "burkinafaso/receivedr", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody String receivedrBrukinaFaso(@RequestBody String request) {
 		Logger.sysLog(LogValues.info, this.getClass().getName(), "json received in the dr is: " + request);
 
 		DeliveryInfoNotification deliveryInfoNotification = new DeliveryInfoNotification();
-		Gson  gson = new Gson();
+		Gson gson = new Gson();
 		JsonParser jsonParser = new JsonParser();
 		JsonElement jsonTree = jsonParser.parse(request);
 		JsonElement firstpart = null;
-		if(jsonTree.isJsonObject()) {
+		if (jsonTree.isJsonObject()) {
 			JsonObject jsonObject = jsonTree.getAsJsonObject();
 			firstpart = jsonObject.get("deliveryInfoNotification");
 		}
@@ -2002,20 +1939,16 @@ public class SMSController {
 		cdr.setStatus(deliveryStatus);
 		cdr.setSender(address);
 
-
 		return "{204 No Content}";
 	}
-	/*end of receive dr for Burkina Faso*/
-
+	/* end of receive dr for Burkina Faso */
 
 	/**
 	 * GET Request Mapping, used for pushing Test SMS
 	 */
 	@RequestMapping(value = "/testSMS")
-	public @ResponseBody String pushTestSMS(
-			@RequestParam("priority") Integer priority,
-			@RequestParam("start") Integer start, 
-			@RequestParam(value = "count", required = false) Integer count,
+	public @ResponseBody String pushTestSMS(@RequestParam("priority") Integer priority,
+			@RequestParam("start") Integer start, @RequestParam(value = "count", required = false) Integer count,
 			@RequestParam(value = "key", required = false) String key,
 			@RequestParam(value = "cli", required = false) String cli, HttpServletRequest request,
 			HttpServletResponse resp) {
@@ -2024,7 +1957,7 @@ public class SMSController {
 		final String hour = String.valueOf(cal.get(Calendar.HOUR_OF_DAY));
 
 		SmsQueue queue = new SmsQueue();
-		
+
 		Random rand = new Random();
 
 		if (key != null && key.toLowerCase().contains("sms") == true && key.toLowerCase().contains(hour) == true) {
@@ -2061,7 +1994,6 @@ public class SMSController {
 			return " Sorry! Please provide password to push TEST SMS... ";
 		}
 	}// End Of Request Mapping
-
 
 	/**
 	 * To send Test MO to self
@@ -2126,7 +2058,6 @@ public class SMSController {
 
 	}// End Of Request Mapping
 
-
 	@RequestMapping(value = "/testUssd", method = RequestMethod.GET)
 	public @ResponseBody String testUssdRequest(@RequestParam(value = "cli") String shortcode,
 			@RequestParam(value = "msisdn") String msisdn, @RequestParam(value = "input") String message,
@@ -2139,14 +2070,12 @@ public class SMSController {
 	}
 
 	@RequestMapping(value = "/test", method = RequestMethod.POST)
-	public @ResponseBody String test(@RequestBody String data ,
-			HttpServletRequest request, HttpServletResponse resp) {
+	public @ResponseBody String test(@RequestBody String data, HttpServletRequest request, HttpServletResponse resp) {
 
-		System.out.println("data: "+data);
+		System.out.println("data: " + data);
 
 		return "in controller";
 	}
-
 
 	public static String convertTexttoUnicode(String str, Integer script) {
 
@@ -2202,7 +2131,6 @@ public class SMSController {
 
 	}// End Of Method
 
-
 	private static String fetchOptionalParamater(HttpServletRequest request, String paramName) {
 
 		String paramValue = request.getParameter(paramName);
@@ -2214,13 +2142,11 @@ public class SMSController {
 		return "";
 	}// End Of Method
 
-
 	@SuppressWarnings("unused")
 	private static Properties fetchAllOptionalParamaters(HttpServletRequest request) {
 		// TODO (Get All Optional Parameters)
 		return null;
 	}// End Of Method
-
 
 	@RequestMapping(value = "/getMOsAsJson", method = RequestMethod.GET)
 	public @ResponseBody String getMOsAsJson() {
@@ -2236,8 +2162,8 @@ public class SMSController {
 
 	@RequestMapping(value = "/bid", method = RequestMethod.GET)
 	public @ResponseBody String bid(@RequestParam(value = "bid", required = true) String sBid,
-			@RequestParam(value = "cli", required = false) String cli,
-			@RequestParam("msisdn") String msisdn, @RequestParam(value = "priority", required = false) Integer msgType,
+			@RequestParam(value = "cli", required = false) String cli, @RequestParam("msisdn") String msisdn,
+			@RequestParam(value = "priority", required = false) Integer msgType,
 			@RequestParam("content") String content,
 			@RequestParam(value = "validate", required = false) Boolean validate,
 			@RequestParam(value = "unicode", required = false) Boolean unicode,
@@ -2258,27 +2184,26 @@ public class SMSController {
 			@RequestParam(value = "msgid", required = false) String msgid, // Added for Dream Travel Mexico (since MT
 			// message required a special msgId)
 			@RequestParam(value = "sessionEnd", required = false) Boolean sessionEnd, HttpServletRequest request)
-					throws IOException
-	{
+			throws IOException {
 		// bid = "bid 342"
-		Logger.sysLog(LogValues.debug, SMSController.class.getName(), "bid: "+sBid);
+		Logger.sysLog(LogValues.debug, SMSController.class.getName(), "bid: " + sBid);
 
 		String regex = "[0-9]*\\.?[0-9]*";
 
-		String msg="";
+		String msg = "";
 		double max = Double.parseDouble(CoreUtils.getProperty("maxbid"));
 		double min = Double.parseDouble(CoreUtils.getProperty("minbid"));
 
-		String inRangeMsg =CoreUtils.getProperty("inrange");
-		String outRangeMsg =CoreUtils.getProperty("outrange");
-		String wrongKeyMessage =CoreUtils.getProperty("wrongkeymsg");
+		String inRangeMsg = CoreUtils.getProperty("inrange");
+		String outRangeMsg = CoreUtils.getProperty("outrange");
+		String wrongKeyMessage = CoreUtils.getProperty("wrongkeymsg");
 		String subCheckUrl = CoreUtils.getProperty("subCheckUrl");
 		String subNoExistMsg = CoreUtils.getProperty("subNotExistMsg");
 
-		if(!sBid.matches(regex)) 
-		{
+		if (!sBid.matches(regex)) {
 			msg = wrongKeyMessage;
-			Logger.sysLog(LogValues.info, SMSController.class.getName(), "Keyword not matched with any mapped keyword: "+sBid);
+			Logger.sysLog(LogValues.info, SMSController.class.getName(),
+					"Keyword not matched with any mapped keyword: " + sBid);
 		} else {
 
 			if (subCheckUrl != null && !subCheckUrl.trim().equals("")) {
@@ -2290,35 +2215,36 @@ public class SMSController {
 					final String subCheckResponse = this.checkForActiveUser(msisdn, subCheckUrl);
 					if (subCheckResponse.equalsIgnoreCase("new") || subCheckResponse.equalsIgnoreCase("unsub")) {
 						subNoExistMsg = new SimpleParser(subNoExistMsg).parse(p);
-						Logger.sysLog(LogValues.debug, SMSController.class.getName(), "Sub not exist for user: "+msisdn+", response: "+subCheckResponse+", msg: "+subNoExistMsg);
-						return this.addSmsToQueue(cli, msisdn, msgType, subNoExistMsg, validate, unicode, smsType, callback,
-								circle, reschedule, serviceType, dataCoding, script, flag, expiry, sync, extraDetail, 
-								serviceid, multiple, session, msgid, sessionEnd, 0, false, null,null,null,0,request);
+						Logger.sysLog(LogValues.debug, SMSController.class.getName(), "Sub not exist for user: "
+								+ msisdn + ", response: " + subCheckResponse + ", msg: " + subNoExistMsg);
+						return this.addSmsToQueue(cli, msisdn, msgType, subNoExistMsg, validate, unicode, smsType,
+								callback, circle, reschedule, serviceType, dataCoding, script, flag, expiry, sync,
+								extraDetail, serviceid, multiple, session, msgid, sessionEnd, 0, false, null, null,
+								null, 0, request);
 					}
-				}
-				catch (Exception e) {
-					Logger.sysLog(2, SMSController.class.getName(), "Error in parsing: " + Logger.getStack((Throwable)e));
+				} catch (Exception e) {
+					Logger.sysLog(2, SMSController.class.getName(),
+							"Error in parsing: " + Logger.getStack((Throwable) e));
 					msg = wrongKeyMessage;
 				}
 			}
 
 			double bid = Double.parseDouble(sBid.trim());
-			Logger.sysLog(LogValues.debug, SMSController.class.getName(), "Bid in double: "+bid);
-			if(bid < max  && bid > min) {
-				Logger.sysLog(LogValues.info, SMSController.class.getName(), "You are  in range "+bid);
+			Logger.sysLog(LogValues.debug, SMSController.class.getName(), "Bid in double: " + bid);
+			if (bid < max && bid > min) {
+				Logger.sysLog(LogValues.info, SMSController.class.getName(), "You are  in range " + bid);
 				msg = inRangeMsg;
 
 			} else {
-				Logger.sysLog(LogValues.info, SMSController.class.getName(), "You are not in range "+bid);
+				Logger.sysLog(LogValues.info, SMSController.class.getName(), "You are not in range " + bid);
 				msg = outRangeMsg;
 
 			}
 		}
 
-
-		return addSmsToQueue(cli, msisdn, msgType, msg, validate, unicode, smsType, callback,
-				circle, reschedule, serviceType, dataCoding, script, flag, expiry, sync, extraDetail, 
-				serviceid, multiple, session, msgid, sessionEnd, 0, false,null,null, null,0,request);
+		return addSmsToQueue(cli, msisdn, msgType, msg, validate, unicode, smsType, callback, circle, reschedule,
+				serviceType, dataCoding, script, flag, expiry, sync, extraDetail, serviceid, multiple, session, msgid,
+				sessionEnd, 0, false, null, null, null, 0, request);
 
 	}
 
@@ -2328,7 +2254,7 @@ public class SMSController {
 		String resp = "Error";
 		try {
 			final URL obj = new URL(urlString);
-			final HttpURLConnection con = (HttpURLConnection)obj.openConnection();
+			final HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 			con.setRequestMethod("GET");
 			final int responseCode = con.getResponseCode();
 			final BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
@@ -2337,13 +2263,12 @@ public class SMSController {
 			while ((inputLine = in.readLine()) != null) {
 				response.append(inputLine);
 			}
-			resp = "" + (Object)response;
+			resp = "" + (Object) response;
 			Logger.sysLog(2, this.getClass().getName(), "url response   " + resp);
 			resp = resp.trim();
 			in.close();
-		}
-		catch (Exception ex) {
-			Logger.sysLog(3, this.getClass().getName(), Logger.getStack((Throwable)ex));
+		} catch (Exception ex) {
+			Logger.sysLog(3, this.getClass().getName(), Logger.getStack((Throwable) ex));
 		}
 		return resp;
 	}
@@ -2361,17 +2286,14 @@ public class SMSController {
 	}
 
 	public static synchronized <T> T convertJsonStrToObject(final String json, final Class<T> classOfT) {
-		return (T)new Gson().fromJson(json, (Class)classOfT);
+		return (T) new Gson().fromJson(json, (Class) classOfT);
 	}
 
-
 	@RequestMapping(value = "/sendMatchAlert")
-	public @ResponseBody String sendMatchAlert(
-			@RequestParam(value = "cli", required = false) String cli,
-			@RequestParam("subServiceId") String subServiceId,
-			@RequestParam("matchId") int matchId,
+	public @ResponseBody String sendMatchAlert(@RequestParam(value = "cli", required = false) String cli,
+			@RequestParam("subServiceId") String subServiceId, @RequestParam("matchId") int matchId,
 			@RequestParam("matchStage") String matchStage,
-			//@RequestParam("matchDetails") String matchDetails,
+			// @RequestParam("matchDetails") String matchDetails,
 			@RequestParam(value = "priority", required = false) Integer msgType,
 			@RequestParam(value = "validate", required = false) Boolean validate,
 			@RequestParam(value = "unicode", required = false) Boolean unicode,
@@ -2389,48 +2311,44 @@ public class SMSController {
 			@RequestParam(value = "serviceid", required = false) String serviceid,
 			@RequestParam(value = "multiple", required = false) Boolean multiple,
 			@RequestParam(value = "session", required = false) Boolean session,
-			@RequestParam(value = "msgid", required = false) String msgid,  //Added for Dream Travel Mexico (since MT message required a special msgId)
+			@RequestParam(value = "msgid", required = false) String msgid, // Added for Dream Travel Mexico (since MT
+																			// message required a special msgId)
 			@RequestParam(value = "sessionEnd", required = false) Boolean sessionEnd,
 			@RequestParam(value = "delay", required = false) Integer delay,
-			@RequestParam(value = "discard", required = false) Boolean discard,
-			@RequestBody String matchDetails,
-			HttpServletRequest request) throws IOException, JSONException{
-
+			@RequestParam(value = "discard", required = false) Boolean discard, @RequestBody String matchDetails,
+			HttpServletRequest request) throws IOException, JSONException {
 
 		Logger.sysLog(LogValues.info, this.getClass().getName(),
-				"matchId " + matchId + " matchType: " + matchStage + "matchDetails: "+matchDetails);
+				"matchId " + matchId + " matchType: " + matchStage + "matchDetails: " + matchDetails);
 
 		String result = "Failure";
 		String content1 = null;
 
-		if(matchId == 0 || matchStage == null) 
+		if (matchId == 0 || matchStage == null)
 			return result;
 
-		MatchContent cricontent = matchContent.getMatchContent(matchId,matchStage);
+		MatchContent cricontent = matchContent.getMatchContent(matchId, matchStage);
 
-		if(cricontent != null)
+		if (cricontent != null)
 			content1 = cricontent.getContent();
 
-		if(content1 == null)
+		if (content1 == null)
 			return result;
 
-		Logger.sysLog(LogValues.info, this.getClass().getName(),
-				"match content:: " + content1);
+		Logger.sysLog(LogValues.info, this.getClass().getName(), "match content:: " + content1);
 
-		String content = CoreUtils.parseMatchContent(content1,matchDetails);
+		String content = CoreUtils.parseMatchContent(content1, matchDetails);
 
-		Logger.sysLog(LogValues.info, this.getClass().getName(),
-				"parseContent:: " + content);
-
+		Logger.sysLog(LogValues.info, this.getClass().getName(), "parseContent:: " + content);
 
 		List<SmsSubscription> msisdns = smsSubscriber.getSubUser(subServiceId);
 
-		for(int k = 0 ; k< msisdns.size() ; k++) {
+		for (int k = 0; k < msisdns.size(); k++) {
 			String msisdn = msisdns.get(k).getMsisdn();
 
 			result = addSmsToQueue(cli, msisdn, msgType, content, validate, unicode, smsType, callback, circle,
 					reschedule, serviceType, dataCoding, script, flag, expiry, sync, extraDetail, serviceid, multiple,
-					session,null, sessionEnd, 0, false,null,null,null,0, request);
+					session, null, sessionEnd, 0, false, null, null, null, 0, request);
 
 		}
 		return result;
@@ -2444,11 +2362,10 @@ public class SMSController {
 
 	}// End Of Method
 
-	/*Third party SMS API for libyana */
+	/* Third party SMS API for libyana */
 	@RequestMapping(value = "/sendsmsAPI", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody String thirdPartySendsmsAPI(@RequestBody String bodyData, 
-			HttpServletRequest request) throws IOException, JSONException{
-
+	public @ResponseBody String thirdPartySendsmsAPI(@RequestBody String bodyData, HttpServletRequest request)
+			throws IOException, JSONException {
 
 		Logger.sysLog(LogValues.info, this.getClass().getName(), "json received in the dr is: " + request);
 
@@ -2459,65 +2376,58 @@ public class SMSController {
 
 		for (Entry<String, Object> entry : yourHashMap.entrySet()) {
 			String val = "";
-			if(entry.getValue()!=null) {
+			if (entry.getValue() != null) {
 				val = entry.getValue().toString();
 			}
 			p.put(entry.getKey(), val);
 		}
 
-		Logger.sysLog(LogValues.info, this.getClass().getName(), "properties: "+p);
+		Logger.sysLog(LogValues.info, this.getClass().getName(), "properties: " + p);
 
 		String msisdn = p.get("msisdn").toString();
 		String cli = p.get("cli").toString();
 		String content = p.get("content").toString();
 
-
-		return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-				false, null, 0, 0, 0, null, false, null, null, false,
-				null,null, null, 0, false,null, null,null,0,request);
+		return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0, 0, 0, null,
+				false, null, null, false, null, null, null, 0, false, null, null, null, 0, request);
 	}
-	/*end of Third party SMS API for libyana*/
+	/* end of Third party SMS API for libyana */
 
-	
-	@RequestMapping(value = "/sendQuizSms", method = RequestMethod.GET )    //sending sms from gaming engine
-	public @ResponseBody String sendQuizSms(
-			@RequestParam(value = "msisdn", required = false) String msisdn,
+	@RequestMapping(value = "/sendQuizSms", method = RequestMethod.GET) // sending sms from gaming engine
+	public @ResponseBody String sendQuizSms(@RequestParam(value = "msisdn", required = false) String msisdn,
 			@RequestParam(value = "serviceid", required = false) String serviceid,
 			@RequestParam(value = "subserviceid", required = false) String subserviceid,
 			@RequestParam(value = "questionString", required = false) String questionString,
 			@RequestParam(value = "optionString", required = false) String optionString,
 			@RequestParam(value = "txnId", required = false) String txnId,
 			@RequestParam(value = "language", required = false) String language,
-			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request){
-		
+			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request) {
+
 		String result = "Failure";
-		
-	    String cli = CoreUtils.getProperty("callerID");
-	    
+
+		String cli = CoreUtils.getProperty("callerID");
+
 		try {
 			String content = validation.getQuestionFormat(msisdn, questionString, optionString);
-			
-			if(content == null) {
-				Logger.sysLog(LogValues.error, this.getClass().getName(), "msisdn [ " + msisdn + " ]"  +"Issue with formation of sms with questionString [ "
-						       + questionString + " ], optionString [ "+ optionString + " ] ");
+
+			if (content == null) {
+				Logger.sysLog(LogValues.error, this.getClass().getName(),
+						"msisdn [ " + msisdn + " ]" + "Issue with formation of sms with questionString [ "
+								+ questionString + " ], optionString [ " + optionString + " ] ");
 				return "Failure";
+			} else {
+				return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0, 0, 0,
+						null, false, null, serviceid, false, null, txnId, null, 0, false, null, null, null, 0, request);
 			}
-			else {
-				return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-						false, null, 0, 0, 0, null, false, null, serviceid, false,
-						null,txnId, null, 0, false,null,null,null,0,request);
-			}
-		}catch(Exception e) {
-			Logger.sysLog(LogValues.info, this.getClass().getName(), "Exception: "+ Logger.getStack(e));
+		} catch (Exception e) {
+			Logger.sysLog(LogValues.info, this.getClass().getName(), "Exception: " + Logger.getStack(e));
 		}
-		
+
 		return result;
 	}
-	
-	
-	@RequestMapping(value = "/sendParsedMsg", method = RequestMethod.GET )    //send sms with content parse
-	public @ResponseBody String sendParsedMsg(
-			@RequestParam(value = "msisdn", required = false) String msisdn,
+
+	@RequestMapping(value = "/sendParsedMsg", method = RequestMethod.GET) // send sms with content parse
+	public @ResponseBody String sendParsedMsg(@RequestParam(value = "msisdn", required = false) String msisdn,
 			@RequestParam(value = "serviceid", required = false) String serviceid,
 			@RequestParam(value = "cli", required = false) String cli,
 			@RequestParam(value = "subserviceid", required = false) String subserviceid,
@@ -2525,83 +2435,75 @@ public class SMSController {
 			@RequestParam(value = "language", required = false) String language,
 			@RequestParam(value = "module", required = false) String module,
 			@RequestParam(value = "contentkey", required = false) String contentkey,
-			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request){
-		
-		Logger.sysLog(LogValues.info, this.getClass().getName(), "sendParsedMsg API Request parameters: "+"msisdn , serviceid , "
-				+ "cli , subserviceid , txnId , language , module , contentkey , extradetails --->" + msisdn + " , " + serviceid + 
-				" , " + cli + " , " + subserviceid + " , " + txnId + " , "+ language + " , "+ module + " , " + contentkey + " , " + extraDetail);
+			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request) {
+
+		Logger.sysLog(LogValues.info, this.getClass().getName(),
+				"sendParsedMsg API Request parameters: " + "msisdn , serviceid , "
+						+ "cli , subserviceid , txnId , language , module , contentkey , extradetails --->" + msisdn
+						+ " , " + serviceid + " , " + cli + " , " + subserviceid + " , " + txnId + " , " + language
+						+ " , " + module + " , " + contentkey + " , " + extraDetail);
 		String result = "Failure";
 		String response = "";
 		String parseValue = "";
 		String content = "";
-		String parseKey = "" ;
+		String parseKey = "";
 		msisdn = CoreUtils.stripCodes(msisdn);
-		
-		
-		
-		
-		
-		
-		Message msg = new Message(CoreUtils.getProperty("gamingCallerId"),msisdn,0,"answer", 3,2);
-		if(serviceid != null)
+
+		Message msg = new Message(CoreUtils.getProperty("gamingCallerId"), msisdn, 0, "answer", 3, 2);
+		if (serviceid != null)
 			msg.setServiceid(serviceid);
-		
-		
-		if(cli == null)
+
+		if (cli == null)
 			cli = CoreUtils.getProperty("gamingCallerId");
-		
-		
-		Logger.sysLog(LogValues.info, this.getClass().getName() ,"Cli for gaming engine service is"+cli);
-		
-		if(subserviceid != null)
+
+		Logger.sysLog(LogValues.info, this.getClass().getName(), "Cli for gaming engine service is" + cli);
+
+		if (subserviceid != null)
 			msg.setSubserviceid(subserviceid);
-		
-		if(language != null)
+
+		if (language != null)
 			msg.setLang(language);
-		
+
 		HttpGateway g = new HttpGateway();
-		
+
 		try {
-			if(module.equalsIgnoreCase("IVR")) {
+			if (module.equalsIgnoreCase("IVR")) {
 				String url = CoreUtils.getProperty("ivr_quizScore");
-				
-				if(url != null && url.length() > 0) {
-					
+
+				if (url != null && url.length() > 0) {
+
 					String status = "";
 					String substatus = "";
 
-					Logger.sysLog(LogValues.info, this.getClass().getName(), "hitting url: "+url );
+					Logger.sysLog(LogValues.info, this.getClass().getName(), "hitting url: " + url);
 					response = g.sendSyncGETRequest(url, msg);
 
 					JSONObject json = new JSONObject(response);
-					
-					if(json.getString("score") != "-1") {
+
+					if (json.getString("score") != "-1") {
 						parseValue = json.getString("score");
 						parseKey = "score";
-					}
-					else {
-						Logger.sysLog(LogValues.info, this.getClass().getName(), "msisdn [ "+msisdn + " ] , score [ 0 ]" );
+					} else {
+						Logger.sysLog(LogValues.info, this.getClass().getName(),
+								"msisdn [ " + msisdn + " ] , score [ 0 ]");
 						parseValue = "0";
 					}
 
-					content = validation.getContent(contentkey , language);
-					parseKey = "$"+parseKey+"$";
-					content = content.replace(parseKey, parseValue );
+					content = validation.getContent(contentkey, language);
+					parseKey = "$" + parseKey + "$";
+					content = content.replace(parseKey, parseValue);
 				}
-				
-				return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-						false, null, 0, 0, 0, null, false, null, null, false,
-						null,null, null, 0, false,null,null,null,0, request);
+
+				return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0, 0, 0,
+						null, false, null, null, false, null, null, null, 0, false, null, null, null, 0, request);
 			}
+		} catch (Exception e) {
+			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: " + Logger.getStack(e));
 		}
-		catch(Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: "+Logger.getStack(e) );
-		}
-		
+
 		return result;
 	}
-	
-	
+
 //	@RequestMapping(value = "/gamingchecksub", method = RequestMethod.GET )  //Subscribe user and then send question to user ( gaming engine)
 //	public @ResponseBody String checksubandzdemo(
 //			@RequestParam(value = "msisdn") String msisdn,
@@ -2707,155 +2609,172 @@ public class SMSController {
 //		return result;
 //		
 //	}
-	
-	
-	
+
 	@RequestMapping(value = { "/topupgame" }, method = { RequestMethod.GET })
-    @ResponseBody
-    public String topupGamingEngine(@RequestParam("msisdn") final String msisdn, @RequestParam("serviceid") final String serviceid, @RequestParam(value = "cli", required = false) String cli, @RequestParam(value = "subserviceid", required = false) final String subserviceid, @RequestParam(value = "queid", required = false) final String queid, @RequestParam(value = "language", required = false) final String language, @RequestParam(value = "txnId", required = false) final String txnId, @RequestParam(value = "autoRenew", required = false) final String autoRenew, @RequestParam(value = "extraDetail", required = false) final String extraDetail, final HttpServletRequest request) {
-        boolean flag = true;
-        final String result = "Failure";
-        if (cli == null) {
-            cli = CoreUtils.getProperty("gamingCallerId");
-        }
-        try {
-            final String chcktopup = this.checkAvalilableTopup(msisdn, serviceid, subserviceid, request);
-            Logger.sysLog(2, this.getClass().getName(), "Chcktopup Response " + chcktopup);
-            if (chcktopup == "failed") {
-                System.out.println("failed reponse ");
-                request.setAttribute("language", (Object)language);
-                return this.addSmsToQueue(cli, msisdn, 0, "Top Up Not Allowed", true, false, null, false, null, false, null, 0, 0, 0, null, false, null, null, false, null, request.getAttribute("language").toString(), null, 0, false, null, null, null, 0, request);
-            }
-            final String topupurl = CoreUtils.getProperty("Topup_API");
-            if (topupurl == null || topupurl.length() <= 0) {
-                Logger.sysLog(3, this.getClass().getName(), "Gaming Engine Subscribe_API not exist in sms_properties");
-                return "Failure";
-            }
-            Logger.sysLog(2, this.getClass().getName(), "Topup_API: " + topupurl);
-            final String userSubscribe = this.topupUser(msisdn, serviceid, subserviceid, autoRenew, language, request);
-            if (userSubscribe.equalsIgnoreCase("success")) {
-                if (CoreUtils.getProperty("Testing") != null && CoreUtils.getProperty("Testing").equalsIgnoreCase("true")) {
-                    flag = false;
-                    if (CoreUtils.getProperty("QuizWhitelistNumbers") != null && CoreUtils.getProperty("QuizWhitelistNumbers").length() > 0) {
-                        final String[] QuizWhitelistNumbersStr = CoreUtils.getProperty("QuizWhitelistNumbers").split(",");
-                        for (int len = QuizWhitelistNumbersStr.length, i = 0; i < len; ++i) {
-                            if (msisdn.equals(QuizWhitelistNumbersStr[i])) {
-                                flag = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!flag) {
-                    Logger.sysLog(2, this.getClass().getName(), "In testing, number is not whitelisted [ " + msisdn + " ]");
-                    return "Success";
-                }
-                final String content = this.fetchquestion(msisdn, serviceid, language, request);
-                request.setAttribute("language", (Object)language);
-                if (content == null || content.length() == 0) {
-                    Logger.sysLog(2, this.getClass().getName(), "Fetched null question");
-                    return "Failure";
-                }
-                return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0, 0, 0, null, false, null, null, false, null, request.getAttribute("language").toString(), null, 0, false, null, null, null, 0, request);
-            }
-            else {
-                Logger.sysLog(2, this.getClass().getName(), "user topup failed [ " + msisdn + " ]");
-            }
-        }
-        catch (Exception e) {
-            Logger.sysLog(2, this.getClass().getName(), "Exception: " + Logger.getStack((Throwable)e));
-        }
-        return result;
-    }
-    
-	
+	@ResponseBody
+	public String topupGamingEngine(@RequestParam("msisdn") final String msisdn,
+			@RequestParam("serviceid") final String serviceid,
+			@RequestParam(value = "cli", required = false) String cli,
+			@RequestParam(value = "subserviceid", required = false) final String subserviceid,
+			@RequestParam(value = "queid", required = false) final String queid,
+			@RequestParam(value = "language", required = false) final String language,
+			@RequestParam(value = "txnId", required = false) final String txnId,
+			@RequestParam(value = "autoRenew", required = false) final String autoRenew,
+			@RequestParam(value = "extraDetail", required = false) final String extraDetail,
+			final HttpServletRequest request) {
+		boolean flag = true;
+		final String result = "Failure";
+		if (cli == null) {
+			cli = CoreUtils.getProperty("gamingCallerId");
+		}
+		try {
+			final String chcktopup = this.checkAvalilableTopup(msisdn, serviceid, subserviceid, request);
+			Logger.sysLog(2, this.getClass().getName(), "Chcktopup Response " + chcktopup);
+			if (chcktopup == "failed") {
+				System.out.println("failed reponse ");
+				request.setAttribute("language", (Object) language);
+				return this.addSmsToQueue(cli, msisdn, 0, "Top Up Not Allowed", true, false, null, false, null, false,
+						null, 0, 0, 0, null, false, null, null, false, null,
+						request.getAttribute("language").toString(), null, 0, false, null, null, null, 0, request);
+			}
+			final String topupurl = CoreUtils.getProperty("Topup_API");
+			if (topupurl == null || topupurl.length() <= 0) {
+				Logger.sysLog(3, this.getClass().getName(), "Gaming Engine Subscribe_API not exist in sms_properties");
+				return "Failure";
+			}
+			Logger.sysLog(2, this.getClass().getName(), "Topup_API: " + topupurl);
+			final String userSubscribe = this.topupUser(msisdn, serviceid, subserviceid, autoRenew, language, request);
+			if (userSubscribe.equalsIgnoreCase("success")) {
+				if (CoreUtils.getProperty("Testing") != null
+						&& CoreUtils.getProperty("Testing").equalsIgnoreCase("true")) {
+					flag = false;
+					if (CoreUtils.getProperty("QuizWhitelistNumbers") != null
+							&& CoreUtils.getProperty("QuizWhitelistNumbers").length() > 0) {
+						final String[] QuizWhitelistNumbersStr = CoreUtils.getProperty("QuizWhitelistNumbers")
+								.split(",");
+						for (int len = QuizWhitelistNumbersStr.length, i = 0; i < len; ++i) {
+							if (msisdn.equals(QuizWhitelistNumbersStr[i])) {
+								flag = true;
+								break;
+							}
+						}
+					}
+				}
+				if (!flag) {
+					Logger.sysLog(2, this.getClass().getName(),
+							"In testing, number is not whitelisted [ " + msisdn + " ]");
+					return "Success";
+				}
+				final String content = this.fetchquestion(msisdn, serviceid, language, request);
+				request.setAttribute("language", (Object) language);
+				if (content == null || content.length() == 0) {
+					Logger.sysLog(2, this.getClass().getName(), "Fetched null question");
+					return "Failure";
+				}
+				return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0, 0, 0,
+						null, false, null, null, false, null, request.getAttribute("language").toString(), null, 0,
+						false, null, null, null, 0, request);
+			} else {
+				Logger.sysLog(2, this.getClass().getName(), "user topup failed [ " + msisdn + " ]");
+			}
+		} catch (Exception e) {
+			Logger.sysLog(2, this.getClass().getName(), "Exception: " + Logger.getStack((Throwable) e));
+		}
+		return result;
+	}
+
 	@RequestMapping(value = { "/checktopupUser" }, method = { RequestMethod.GET })
-    @ResponseBody
-    public String checkAvalilableTopup(@RequestParam(value = "msisdn", required = false) final String msisdn, @RequestParam(value = "serviceid", required = false) final String serviceid, @RequestParam(value = "subserviceid", required = false) final String subserviceid, final HttpServletRequest request) throws IOException {
-        final String topupUrl = "";
-        String response = "";
-        String chcktopupUrl = "failed";
-        final Message msg = new Message(CoreUtils.getProperty("gamingCallerId"), msisdn, 0, "answer", 3, 2);
-        if (serviceid != null) {
-            msg.setServiceid(serviceid);
-        }
-        if (subserviceid != null) {
-            msg.setSubserviceid(subserviceid);
-        }
-        final HttpGateway g = new HttpGateway();
-        try {
-            chcktopupUrl = CoreUtils.getProperty("CheckTopup_API");
-            if (chcktopupUrl != null && chcktopupUrl.length() > 0) {
-                final String status = "";
-                final String substatus = "";
-                Logger.sysLog(6, this.getClass().getName(), " CheckTopup_API: " + chcktopupUrl);
-                response = g.sendSyncGETRequest(chcktopupUrl, msg);
-                final JSONObject json = new JSONObject(response);
-                Logger.sysLog(2, this.getClass().getName(), "user [ " + msisdn + " ]" + " gaming chck topup response " + json);
-                if (json.getString("status").equalsIgnoreCase("SUCCESS") && json.getString("subStatus").equalsIgnoreCase("SUCCESS")) {
-                    chcktopupUrl = "success";
-                }
-                else {
-                    Logger.sysLog(2, this.getClass().getName(), "User topup failed [ " + msisdn + " ]");
-                    chcktopupUrl = "failed";
-                }
-            }
-        }
-        catch (Exception e) {
-            Logger.sysLog(3, this.getClass().getName(), "Exception: " + Logger.getStack((Throwable)e));
-        }
-        return chcktopupUrl;
-    }
-    
-	
+	@ResponseBody
+	public String checkAvalilableTopup(@RequestParam(value = "msisdn", required = false) final String msisdn,
+			@RequestParam(value = "serviceid", required = false) final String serviceid,
+			@RequestParam(value = "subserviceid", required = false) final String subserviceid,
+			final HttpServletRequest request) throws IOException {
+		final String topupUrl = "";
+		String response = "";
+		String chcktopupUrl = "failed";
+		final Message msg = new Message(CoreUtils.getProperty("gamingCallerId"), msisdn, 0, "answer", 3, 2);
+		if (serviceid != null) {
+			msg.setServiceid(serviceid);
+		}
+		if (subserviceid != null) {
+			msg.setSubserviceid(subserviceid);
+		}
+		final HttpGateway g = new HttpGateway();
+		try {
+			chcktopupUrl = CoreUtils.getProperty("CheckTopup_API");
+			if (chcktopupUrl != null && chcktopupUrl.length() > 0) {
+				final String status = "";
+				final String substatus = "";
+				Logger.sysLog(6, this.getClass().getName(), " CheckTopup_API: " + chcktopupUrl);
+				response = g.sendSyncGETRequest(chcktopupUrl, msg);
+				final JSONObject json = new JSONObject(response);
+				Logger.sysLog(2, this.getClass().getName(),
+						"user [ " + msisdn + " ]" + " gaming chck topup response " + json);
+				if (json.getString("status").equalsIgnoreCase("SUCCESS")
+						&& json.getString("subStatus").equalsIgnoreCase("SUCCESS")) {
+					chcktopupUrl = "success";
+				} else {
+					Logger.sysLog(2, this.getClass().getName(), "User topup failed [ " + msisdn + " ]");
+					chcktopupUrl = "failed";
+				}
+			}
+		} catch (Exception e) {
+			Logger.sysLog(3, this.getClass().getName(), "Exception: " + Logger.getStack((Throwable) e));
+		}
+		return chcktopupUrl;
+	}
+
 	@RequestMapping(value = { "/topupUser" }, method = { RequestMethod.GET })
-    @ResponseBody
-    public String topupUser(@RequestParam(value = "msisdn", required = false) final String msisdn, @RequestParam(value = "serviceid", required = false) final String serviceid, @RequestParam(value = "subserviceid", required = false) final String subserviceid, @RequestParam(value = "autoRenew", required = false) final String autoRenew, @RequestParam(value = "language", required = false) final String language, final HttpServletRequest request) throws IOException {
-        String topupUrl = "";
-        String response = "";
-        String topupResult = "failed";
-        final Message msg = new Message(CoreUtils.getProperty("gamingCallerId"), msisdn, 0, "answer", 3, 2);
-        if (serviceid != null) {
-            msg.setServiceid(serviceid);
-        }
-        if (subserviceid != null) {
-            msg.setSubserviceid(subserviceid);
-        }
-        if (language != null) {
-            msg.setLang(language);
-        }
-        if (autoRenew != null) {
-            msg.setMsgid(autoRenew);
-        }
-        final HttpGateway g = new HttpGateway();
-        try {
-            topupUrl = CoreUtils.getProperty("Topup_API");
-            if (topupUrl != null && topupUrl.length() > 0) {
-                final String status = "";
-                final String substatus = "";
-                Logger.sysLog(6, this.getClass().getName(), "Topup_API: " + topupUrl);
-                response = g.sendSyncGETRequest(topupUrl, msg);
-                final JSONObject json = new JSONObject(response);
-                Logger.sysLog(2, this.getClass().getName(), "user [ " + msisdn + " ]" + " gaming topup response " + json);
-                if (json.getString("subStatus").equalsIgnoreCase("Unlocked")) {
-                    topupResult = "success";
-                }
-                else {
-                    Logger.sysLog(2, this.getClass().getName(), "User topup failed [ " + msisdn + " ]");
-                    topupResult = "failed";
-                }
-            }
-        }
-        catch (Exception e) {
-            Logger.sysLog(3, this.getClass().getName(), "Exception: " + Logger.getStack((Throwable)e));
-        }
-        return topupResult;
-    }
-    
-	
-	@RequestMapping(value = "/sendQuestion", method = RequestMethod.GET )  //Subscribe user and then send question to user ( gaming engine)
-	public @ResponseBody String sendQuestion(
-			@RequestParam(value = "msisdn") String msisdn,
+	@ResponseBody
+	public String topupUser(@RequestParam(value = "msisdn", required = false) final String msisdn,
+			@RequestParam(value = "serviceid", required = false) final String serviceid,
+			@RequestParam(value = "subserviceid", required = false) final String subserviceid,
+			@RequestParam(value = "autoRenew", required = false) final String autoRenew,
+			@RequestParam(value = "language", required = false) final String language, final HttpServletRequest request)
+			throws IOException {
+		String topupUrl = "";
+		String response = "";
+		String topupResult = "failed";
+		final Message msg = new Message(CoreUtils.getProperty("gamingCallerId"), msisdn, 0, "answer", 3, 2);
+		if (serviceid != null) {
+			msg.setServiceid(serviceid);
+		}
+		if (subserviceid != null) {
+			msg.setSubserviceid(subserviceid);
+		}
+		if (language != null) {
+			msg.setLang(language);
+		}
+		if (autoRenew != null) {
+			msg.setMsgid(autoRenew);
+		}
+		final HttpGateway g = new HttpGateway();
+		try {
+			topupUrl = CoreUtils.getProperty("Topup_API");
+			if (topupUrl != null && topupUrl.length() > 0) {
+				final String status = "";
+				final String substatus = "";
+				Logger.sysLog(6, this.getClass().getName(), "Topup_API: " + topupUrl);
+				response = g.sendSyncGETRequest(topupUrl, msg);
+				final JSONObject json = new JSONObject(response);
+				Logger.sysLog(2, this.getClass().getName(),
+						"user [ " + msisdn + " ]" + " gaming topup response " + json);
+				if (json.getString("subStatus").equalsIgnoreCase("Unlocked")) {
+					topupResult = "success";
+				} else {
+					Logger.sysLog(2, this.getClass().getName(), "User topup failed [ " + msisdn + " ]");
+					topupResult = "failed";
+				}
+			}
+		} catch (Exception e) {
+			Logger.sysLog(3, this.getClass().getName(), "Exception: " + Logger.getStack((Throwable) e));
+		}
+		return topupResult;
+	}
+
+	@RequestMapping(value = "/sendQuestion", method = RequestMethod.GET) // Subscribe user and then send question to
+																			// user ( gaming engine)
+	public @ResponseBody String sendQuestion(@RequestParam(value = "msisdn") String msisdn,
 			@RequestParam(value = "serviceid") String serviceid,
 			@RequestParam(value = "cli", required = false) String cli,
 			@RequestParam(value = "subserviceid", required = false) String subserviceid,
@@ -2863,435 +2782,418 @@ public class SMSController {
 			@RequestParam(value = "txnId", required = false) String txnId,
 			@RequestParam(value = "language") String language,
 			@RequestParam(value = "autoRenew", required = false) String autoRenew,
-			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request){
-		
+			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request) {
+
 		boolean flag = true;
-		
+
 		String result = "Failure";
-		
-		if(cli == null)
+
+		if (cli == null)
 			cli = CoreUtils.getProperty("gamingCallerId");
 		try {
-			
-			String SubscribeUrl = CoreUtils.getProperty("Subscribe_API");   // if sent wrong ans
-			if(SubscribeUrl != null  && SubscribeUrl.length() > 0) {
+
+			String SubscribeUrl = CoreUtils.getProperty("Subscribe_API"); // if sent wrong ans
+			if (SubscribeUrl != null && SubscribeUrl.length() > 0) {
 				Logger.sysLog(LogValues.info, this.getClass().getName(), "SubscribeUrl: " + SubscribeUrl);
-			}else {
-				Logger.sysLog(LogValues.error, this.getClass().getName(), "Gaming Engine Subscribe_API not exist in sms_properties");
-			    return "Failure";
+			} else {
+				Logger.sysLog(LogValues.error, this.getClass().getName(),
+						"Gaming Engine Subscribe_API not exist in sms_properties");
+				return "Failure";
 			}
-			
+
 			String userSubscribe;
-			
-			if(CoreUtils.getProperty("gatewaybilling") != null && CoreUtils.getProperty("gatewaybilling").equalsIgnoreCase("true"))
-			{
-				
-				userSubscribe= "success";
-				
+
+			if (CoreUtils.getProperty("gatewaybilling") != null
+					&& CoreUtils.getProperty("gatewaybilling").equalsIgnoreCase("true")) {
+
+				userSubscribe = "success";
+
 			}
-			
-			else
-			{
-			 userSubscribe =  subscribeQuizUser(msisdn,serviceid,subserviceid,language, autoRenew, request); //subscribing user before sending fetchquestion
-			
+
+			else {
+				userSubscribe = subscribeQuizUser(msisdn, serviceid, subserviceid, language, autoRenew, request); // subscribing
+																													// user
+																													// before
+																													// sending
+																													// fetchquestion
+
 			}
-			
-			if(userSubscribe.equalsIgnoreCase("success"))
-			{
-				
-				if(CoreUtils.getProperty("Testing") != null && CoreUtils.getProperty("Testing").equalsIgnoreCase("true"))
-				{
-					
+
+			if (userSubscribe.equalsIgnoreCase("success")) {
+
+				if (CoreUtils.getProperty("Testing") != null
+						&& CoreUtils.getProperty("Testing").equalsIgnoreCase("true")) {
+
 					flag = false;
-					if(CoreUtils.getProperty("QuizWhitelistNumbers") != null && CoreUtils.getProperty("QuizWhitelistNumbers").length() > 0) {
-						
-							String[] QuizWhitelistNumbersStr = CoreUtils.getProperty("QuizWhitelistNumbers").split(",");
-							int len = QuizWhitelistNumbersStr.length;
-							
-							for(int i = 0 ; i<len ; i++) {
-								if(msisdn.equals(QuizWhitelistNumbersStr[i])) {
-									flag = true;
-									break;
-								}
+					if (CoreUtils.getProperty("QuizWhitelistNumbers") != null
+							&& CoreUtils.getProperty("QuizWhitelistNumbers").length() > 0) {
+
+						String[] QuizWhitelistNumbersStr = CoreUtils.getProperty("QuizWhitelistNumbers").split(",");
+						int len = QuizWhitelistNumbersStr.length;
+
+						for (int i = 0; i < len; i++) {
+							if (msisdn.equals(QuizWhitelistNumbersStr[i])) {
+								flag = true;
+								break;
 							}
+						}
 					}
 				}
-				
-				if(!flag) {
-					Logger.sysLog(LogValues.info, this.getClass().getName(), "In testing, number is not whitelisted [ " + msisdn + " ]");
+
+				if (!flag) {
+					Logger.sysLog(LogValues.info, this.getClass().getName(),
+							"In testing, number is not whitelisted [ " + msisdn + " ]");
 					return "Success";
 				}
-				
-				String content = fetchquestion(msisdn, serviceid,language, request);
-				
-				if(content == null || content.length() ==0) 
-				{
+
+				String content = fetchquestion(msisdn, serviceid, language, request);
+
+				if (content == null || content.length() == 0) {
 					Logger.sysLog(LogValues.info, this.getClass().getName(), "Fetched null question");
 					return "Failure";
+				} else {
+					return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0,
+							0, 0, null, false, null, null, false, null, null, null, 0, false, null, null, null, 0,
+							request);
 				}
-				else {
-					return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-							false, null, 0, 0, 0, null, false, null, null, false,
-							null,null, null, 0, false,null,null,null,0, request);
-				}
-			}
-			else {
+			} else {
 				Logger.sysLog(LogValues.info, this.getClass().getName(), "user subscription failed [ " + msisdn + " ]");
 			}
-			
-		}catch(Exception e) {
-			Logger.sysLog(LogValues.info, this.getClass().getName(), "Exception: "+ Logger.getStack(e));
+
+		} catch (Exception e) {
+			Logger.sysLog(LogValues.info, this.getClass().getName(), "Exception: " + Logger.getStack(e));
 		}
-		
+
 		return result;
 	}
 
-	@RequestMapping(value = "/QuizQueResponse", method = RequestMethod.GET )    //For gaming engine quiz answer : AWCC Afganistan
-	public @ResponseBody String quizQueResponse(
-			@RequestParam(value = "msisdn") String msisdn,
-			@RequestParam(value = "cli") String cli,
-			@RequestParam(value = "serviceid") String serviceid,
+	@RequestMapping(value = "/QuizQueResponse", method = RequestMethod.GET) // For gaming engine quiz answer : AWCC
+																			// Afganistan
+	public @ResponseBody String quizQueResponse(@RequestParam(value = "msisdn") String msisdn,
+			@RequestParam(value = "cli") String cli, @RequestParam(value = "serviceid") String serviceid,
 			@RequestParam(value = "subserviceid", required = false) String subserviceid,
 			@RequestParam(value = "answer") String answer,
 			@RequestParam(value = "txnId", required = false) String txnId,
 			@RequestParam(value = "language") String language,
-			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request){
+			@RequestParam(value = "extraDetail", required = false) String extraDetail, HttpServletRequest request) {
 
 		String result = "Failure";
 
-		Logger.sysLog(LogValues.info, this.getClass().getName(), "getting quiz answer => msisdn: " + msisdn + " , serviceid: " + serviceid + 
-				" , subserviceid: "+ subserviceid + " , answer: "+ answer + " , txnId: " + txnId + " , extraDetail: " + extraDetail + " , language: "+language);
+		Logger.sysLog(LogValues.info, this.getClass().getName(),
+				"getting quiz answer => msisdn: " + msisdn + " , serviceid: " + serviceid + " , subserviceid: "
+						+ subserviceid + " , answer: " + answer + " , txnId: " + txnId + " , extraDetail: "
+						+ extraDetail + " , language: " + language);
 
 		msisdn = CoreUtils.stripCodes(msisdn);
 		String questionId = validation.getQuestionId(msisdn);
-		
-		System.out.println("question id ="+questionId);
-		
-		if(questionId == null) {
-			Logger.sysLog(LogValues.info, this.getClass().getName(), "QuestionId not found for user: "+ msisdn);
+
+		System.out.println("question id =" + questionId);
+
+		if (questionId == null) {
+			Logger.sysLog(LogValues.info, this.getClass().getName(), "QuestionId not found for user: " + msisdn);
 			return "Failure";
 		}
-		
+
 		String submitAnsResult = "";
 
 		try {
-			
-			/*String content = "";
-			if(submitAnsResult.equalsIgnoreCase("success")) {   
-				String currectAns = CoreUtils.getProperty("currectAns");   // if sent correct ans
-				if(currectAns != null  && currectAns.length() > 0) {
-					Logger.sysLog(LogValues.info, this.getClass().getName(), "user: "+ msisdn + " answer is correct for questionId: "+questionId);
-					content = currectAns;
-				}
-		    }
-			else if(submitAnsResult.equalsIgnoreCase("failure")){
-				
-				String wrongAnsContent = CoreUtils.getProperty("Wrong_Ans");   // if sent wrong ans
-				if(wrongAnsContent != null  && wrongAnsContent.length() > 0) {
-					Logger.sysLog(LogValues.info, this.getClass().getName(), "user: "+ msisdn + " answer is wrong for questionId: "+questionId);
-					content = wrongAnsContent;
-				}
-			}
-			else {
-				Logger.sysLog(LogValues.error, this.getClass().getName(), "not getting result for checkAnswer API of gaming engine");
-				return "Failure";
-			}
-			
-			this.addSmsToQueue(CoreUtils.getProperty("callerID"), msisdn, 0, content, true, false, null, false, null,
-					false, null, 0, 0, 0, null, false, null, null, false,
-					null,null, null, 0, false,null,null,null, request);*/
-			
-			//result = checkusereligibility(msisdn, serviceid,language, request);
-			
-			//check ans result and send message to user according to his/her eligibility
-			submitAnsResult = checkAnsResult(msisdn,cli, answer, questionId , serviceid , language, request );
-			
-			String content = fetchquestion(msisdn, serviceid,language, request);
-			
-			if(content == null || content.length() ==0) {
+
+			/*
+			 * String content = ""; if(submitAnsResult.equalsIgnoreCase("success")) { String
+			 * currectAns = CoreUtils.getProperty("currectAns"); // if sent correct ans
+			 * if(currectAns != null && currectAns.length() > 0) {
+			 * Logger.sysLog(LogValues.info, this.getClass().getName(), "user: "+ msisdn +
+			 * " answer is correct for questionId: "+questionId); content = currectAns; } }
+			 * else if(submitAnsResult.equalsIgnoreCase("failure")){
+			 * 
+			 * String wrongAnsContent = CoreUtils.getProperty("Wrong_Ans"); // if sent wrong
+			 * ans if(wrongAnsContent != null && wrongAnsContent.length() > 0) {
+			 * Logger.sysLog(LogValues.info, this.getClass().getName(), "user: "+ msisdn +
+			 * " answer is wrong for questionId: "+questionId); content = wrongAnsContent; }
+			 * } else { Logger.sysLog(LogValues.error, this.getClass().getName(),
+			 * "not getting result for checkAnswer API of gaming engine"); return "Failure";
+			 * }
+			 * 
+			 * this.addSmsToQueue(CoreUtils.getProperty("callerID"), msisdn, 0, content,
+			 * true, false, null, false, null, false, null, 0, 0, 0, null, false, null,
+			 * null, false, null,null, null, 0, false,null,null,null, request);
+			 */
+
+			// result = checkusereligibility(msisdn, serviceid,language, request);
+
+			// check ans result and send message to user according to his/her eligibility
+			submitAnsResult = checkAnsResult(msisdn, cli, answer, questionId, serviceid, language, request);
+
+			String content = fetchquestion(msisdn, serviceid, language, request);
+
+			if (content == null || content.length() == 0) {
 				Logger.sysLog(LogValues.info, this.getClass().getName(), "Fetched null question");
 				return "Failure";
+			} else {
+				return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0, 0, 0,
+						null, false, null, null, false, null, null, null, 0, false, null, null, null, 0, request);
 			}
-			else {
-				return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-						false, null, 0, 0, 0, null, false, null, null, false,
-						null,null, null, 0, false,null,null,null,0, request);
-			}
-		}
-		catch(Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(), "Submit_Ans hit false : "+ Logger.getStack(e));
+		} catch (Exception e) {
+			Logger.sysLog(LogValues.error, this.getClass().getName(), "Submit_Ans hit false : " + Logger.getStack(e));
 		}
 		return "success";
 	}
-	
-	
-	
-	
+
 	@RequestMapping(value = "/checkAnsResult", method = RequestMethod.GET)
 	public @ResponseBody String checkAnsResult(@RequestParam(value = "msisdn") String msisdn,
-			@RequestParam(value = "cli") String cli,
-			@RequestParam(value = "answer") String answer,
+			@RequestParam(value = "cli") String cli, @RequestParam(value = "answer") String answer,
 			@RequestParam(value = "questionId", required = false) String questionId,
 			@RequestParam(value = "serviceid", required = false) String serviceid,
-			@RequestParam(value = "language", required = false) String language,
-			HttpServletRequest request) throws IOException {
+			@RequestParam(value = "language", required = false) String language, HttpServletRequest request)
+			throws IOException {
 
 		String submitAnsUrl = "";
 		String response = "";
 		String submitAnsResult = "";
-		
+
 		System.out.println("came here");
 
-		Message msg = new Message(CoreUtils.getProperty("gamingCallerId"),msisdn,0,"answer", 3,2);
-		if(serviceid != null)
+		Message msg = new Message(CoreUtils.getProperty("gamingCallerId"), msisdn, 0, "answer", 3, 2);
+		if (serviceid != null)
 			msg.setServiceid(serviceid);
 		msg.setMessage(answer.toString());
 		msg.setLang(language);
-		
+
 		HttpGateway g = new HttpGateway();
-		
-		String parseValue = null,parseKey = null;
+
+		String parseValue = null, parseKey = null;
 
 		try {
-			//checking ans result
+			// checking ans result
 			submitAnsUrl = CoreUtils.getProperty("Submit_Ans_API");
-			
+
 			System.out.println("came here 2");
 
-			if(submitAnsUrl != null  && submitAnsUrl.length() > 0) {
+			if (submitAnsUrl != null && submitAnsUrl.length() > 0) {
 
 				System.out.println("came here 3");
-				
+
 				submitAnsUrl = submitAnsUrl.replace("$questionId$", questionId);
 				String status = "";
 				String substatus = "";
 
-				Logger.sysLog(LogValues.info, this.getClass().getName(), "Submit_Ans: "+submitAnsUrl );
+				Logger.sysLog(LogValues.info, this.getClass().getName(), "Submit_Ans: " + submitAnsUrl);
 
 				response = g.sendSyncGETRequest(submitAnsUrl, msg);
 
 				JSONObject json = new JSONObject(response);
-				
-				Logger.sysLog(LogValues.info, this.getClass().getName(), "user [ "+msisdn + " ]" +"Answer check response "+json );
 
-				if(json.getString("status").equalsIgnoreCase("SUCCESS")) {
+				Logger.sysLog(LogValues.info, this.getClass().getName(),
+						"user [ " + msisdn + " ]" + "Answer check response " + json);
 
-					if(json.getString("subStatus").equalsIgnoreCase("SUCCESS"))  submitAnsResult = "success";
+				if (json.getString("status").equalsIgnoreCase("SUCCESS")) {
+
+					if (json.getString("subStatus").equalsIgnoreCase("SUCCESS"))
+						submitAnsResult = "success";
 					else
 						submitAnsResult = "failure";
 					boolean prevAns = false;
 					String content = "";
-					
-					if(submitAnsResult.equals("success")) 
-					{
+
+					if (submitAnsResult.equals("success")) {
 						prevAns = true;
-						
+
 					}
-					
+
 					String url = CoreUtils.getProperty("ivr_quizScore");
-					
-					if(url != null && url.length() > 0) 
-					{
-						
+
+					if (url != null && url.length() > 0) {
+
 						String scoreapistatus = "";
 						String scoreapisubstatus = "";
 
-						Logger.sysLog(LogValues.info, this.getClass().getName(), "hitting url: "+url );
+						Logger.sysLog(LogValues.info, this.getClass().getName(), "hitting url: " + url);
 						response = g.sendSyncGETRequest(url, msg);
 
 						JSONObject scoreapijson = new JSONObject(response);
-						
-						if(json.getString("score") != "-1") {
+
+						if (json.getString("score") != "-1") {
 							parseValue = json.getString("score");
 							parseKey = "score";
-						}
-						else {
-							Logger.sysLog(LogValues.info, this.getClass().getName(), "msisdn [ "+msisdn + " ] , score [ 0 ]" );
+						} else {
+							Logger.sysLog(LogValues.info, this.getClass().getName(),
+									"msisdn [ " + msisdn + " ] , score [ 0 ]");
 							parseValue = "0";
 						}
 
-					
 					}
-					
-					if(!prevAns) 
-					{
-						String wrongAnsContent = validation.getContent("Wrong_Ans_earlier" , language);   // if sent wrong ans
-						if(wrongAnsContent != null  && wrongAnsContent.length() > 0) 
-							{
-							
+
+					if (!prevAns) {
+						String wrongAnsContent = validation.getContent("Wrong_Ans_earlier", language); // if sent wrong
+																										// ans
+						if (wrongAnsContent != null && wrongAnsContent.length() > 0) {
+
 							content = wrongAnsContent;
-							parseKey = "$"+parseKey+"$";
-							content = content.replace(parseKey, parseValue );
-						return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-								false, null, 0, 0, 0, null, false, null, null, false,
-								null,null, null, 0, false,null,null,null,0, request);
-						
-							}
-					}
-					else
-					{
-						String correctAns = validation.getContent("correct_ans_msg" , language); 
+							parseKey = "$" + parseKey + "$";
+							content = content.replace(parseKey, parseValue);
+							return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false,
+									null, 0, 0, 0, null, false, null, null, false, null, null, null, 0, false, null,
+									null, null, 0, request);
+
+						}
+					} else {
+						String correctAns = validation.getContent("correct_ans_msg", language);
 						{// if sent correct ans
-						if(correctAns != null  && correctAns.length() > 0)
-							{
-							content = correctAns;
-							
-							parseKey = "$"+parseKey+"$";
-							content = content.replace(parseKey, parseValue );
+							if (correctAns != null && correctAns.length() > 0) {
+								content = correctAns;
+
+								parseKey = "$" + parseKey + "$";
+								content = content.replace(parseKey, parseValue);
 							}
-						return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-								false, null, 0, 0, 0, null, false, null, null, false,
-								null,null, null, 0, false,null,null,null,0, request);
-						}
+							return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false,
+									null, 0, 0, 0, null, false, null, null, false, null, null, null, 0, false, null,
+									null, null, 0, request);
 						}
 					}
 				}
-				else {
-					Logger.sysLog(LogValues.error, this.getClass().getName(), "Submit_Ans API hit failed");
-				}
-		
-		}catch(Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: "+Logger.getStack(e) );
+			} else {
+				Logger.sysLog(LogValues.error, this.getClass().getName(), "Submit_Ans API hit failed");
+			}
+
+		} catch (Exception e) {
+			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: " + Logger.getStack(e));
 		}
 
 		return submitAnsResult;
 	}// End Of Method
-	
-	
+
 	@RequestMapping(value = "/subscribeQuizUser", method = RequestMethod.GET)
 	public @ResponseBody String subscribeQuizUser(@RequestParam(value = "msisdn", required = false) String msisdn,
 			@RequestParam(value = "serviceid", required = false) String serviceid,
 			@RequestParam(value = "subserviceid", required = false) String subserviceid,
 			@RequestParam(value = "language", required = false) String language,
-			@RequestParam(value = "autoRenew", required = false) String autoRenew,
-			HttpServletRequest request) throws IOException {
+			@RequestParam(value = "autoRenew", required = false) String autoRenew, HttpServletRequest request)
+			throws IOException {
 
 		String subscribeUrl = "";
 		String response = "";
 		String subscribeResult = "failed";
 
-		Message msg = new Message(CoreUtils.getProperty("gamingCallerId"),msisdn,0,"answer", 3,2);
-		if(serviceid != null)
+		Message msg = new Message(CoreUtils.getProperty("gamingCallerId"), msisdn, 0, "answer", 3, 2);
+		if (serviceid != null)
 			msg.setServiceid(serviceid);
-		
-		if(subserviceid != null)
+
+		if (subserviceid != null)
 			msg.setSubserviceid(subserviceid);
-		
-		if(language != null)
+
+		if (language != null)
 			msg.setLang(language);
-		
-		if(autoRenew != null)
+
+		if (autoRenew != null)
 			msg.setMsgid(autoRenew);
-		
+
 		HttpGateway g = new HttpGateway();
 
 		try {
-			//checking ans result
+			// checking ans result
 			subscribeUrl = CoreUtils.getProperty("Subscribe_API");
 
-			if(subscribeUrl != null  && subscribeUrl.length() > 0) {
+			if (subscribeUrl != null && subscribeUrl.length() > 0) {
 
 				String status = "";
 				String substatus = "";
 
-				Logger.sysLog(LogValues.debug, this.getClass().getName(), "Subscribe_API: "+subscribeUrl );
+				Logger.sysLog(LogValues.debug, this.getClass().getName(), "Subscribe_API: " + subscribeUrl);
 
 				response = g.sendSyncGETRequest(subscribeUrl, msg);
 
 				JSONObject json = new JSONObject(response);
-				
-				Logger.sysLog(LogValues.info, this.getClass().getName(), "user [ "+msisdn + " ]" +" gaming subscribe response "+json );
 
-				if(json.getString("subStatus").equalsIgnoreCase("ACTIVE")) {
+				Logger.sysLog(LogValues.info, this.getClass().getName(),
+						"user [ " + msisdn + " ]" + " gaming subscribe response " + json);
+
+				if (json.getString("subStatus").equalsIgnoreCase("ACTIVE")) {
 
 					subscribeResult = "success";
-				}
-				else {
-					Logger.sysLog(LogValues.info, this.getClass().getName(), "User subscription failed [ "+msisdn + " ]");
+				} else {
+					Logger.sysLog(LogValues.info, this.getClass().getName(),
+							"User subscription failed [ " + msisdn + " ]");
 					subscribeResult = "failed";
 				}
-		}
-		}catch(Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: "+Logger.getStack(e) );
+			}
+		} catch (Exception e) {
+			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: " + Logger.getStack(e));
 		}
 
 		return subscribeResult;
 	}// End Of Method
-	
 
 	@RequestMapping(value = "/fetchquestion", method = RequestMethod.GET)
 	public @ResponseBody String fetchquestion(@RequestParam(value = "msisdn") String msisdn,
-			@RequestParam(value = "serviceid") String serviceid,
-			@RequestParam(value = "language") String language,
+			@RequestParam(value = "serviceid") String serviceid, @RequestParam(value = "language") String language,
 			HttpServletRequest request) throws IOException {
 
 		String content = "";
 		msisdn = CoreUtils.stripCodes(msisdn);
-		
-		Message msg = new Message(CoreUtils.getProperty("gamingCallerId"),msisdn,0,"QuestionFetch", 3,2);
-		
-		
-		
-		if(serviceid != null)
+
+		Message msg = new Message(CoreUtils.getProperty("gamingCallerId"), msisdn, 0, "QuestionFetch", 3, 2);
+
+		if (serviceid != null)
 			msg.setServiceid(serviceid);
-		
-		if(language != null)
+
+		if (language != null)
 			msg.setLang(language);
-		
+
 		HttpGateway g = new HttpGateway();
 
 		try {
-			//finding next question
+			// finding next question
 			String nextQueUrl = CoreUtils.getProperty("Next_Que_API");
 
-			if(nextQueUrl != null  && nextQueUrl.length() > 0) {
+			if (nextQueUrl != null && nextQueUrl.length() > 0) {
 
-				Logger.sysLog(LogValues.debug, this.getClass().getName(), "nextQueUrl: "+nextQueUrl );
+				Logger.sysLog(LogValues.debug, this.getClass().getName(), "nextQueUrl: " + nextQueUrl);
 
 				String response = g.sendSyncGETRequest(nextQueUrl, msg);
 
 				JSONObject nextqueRes = new JSONObject(response);
-				
-				Logger.sysLog(LogValues.info, this.getClass().getName(), "user [ "+msisdn + " ]" +" fetch question response "+nextqueRes );
 
-				if (nextqueRes.getString("status")!= null && nextqueRes.getString("status").equalsIgnoreCase("SUCCESS")) 
-				{
+				Logger.sysLog(LogValues.info, this.getClass().getName(),
+						"user [ " + msisdn + " ]" + " fetch question response " + nextqueRes);
 
-					if (nextqueRes.getString("subStatus") != null && nextqueRes.getString("subStatus").equalsIgnoreCase("Available")) {
+				if (nextqueRes.getString("status") != null
+						&& nextqueRes.getString("status").equalsIgnoreCase("SUCCESS")) {
+
+					if (nextqueRes.getString("subStatus") != null
+							&& nextqueRes.getString("subStatus").equalsIgnoreCase("Available")) {
 
 						String question = nextqueRes.getString("questionString");
 						String options = nextqueRes.getString("optionString");
-						String getQue = validation.getQuestionFormat(msisdn, question , options);
+						String getQue = validation.getQuestionFormat(msisdn, question, options);
 
-						if(getQue != null) 
-						{
+						if (getQue != null) {
 							content = getQue;
 						}
-					}
-					else if (nextqueRes.getString("subStatus") != null && nextqueRes.getString("subStatus").equalsIgnoreCase("EndOfQuestion")) {
+					} else if (nextqueRes.getString("subStatus") != null
+							&& nextqueRes.getString("subStatus").equalsIgnoreCase("EndOfQuestion")) {
 
-						String maxLimitContent = validation.getContent("Max_Limit_Msg" , language);   // if played max limit for today
-						if(maxLimitContent != null  && maxLimitContent.length() > 0) content = maxLimitContent;
+						String maxLimitContent = validation.getContent("Max_Limit_Msg", language); // if played max
+																									// limit for today
+						if (maxLimitContent != null && maxLimitContent.length() > 0)
+							content = maxLimitContent;
+					} else {
+						Logger.sysLog(LogValues.info, this.getClass().getName(),
+								"user [ " + msisdn + " ] , substatus [ " + nextqueRes.getString("subStatus") + " ] ");
 					}
-					else {
-						Logger.sysLog(LogValues.info, this.getClass().getName(), "user [ "+ msisdn + " ] , substatus [ " + 
-								nextqueRes.getString("subStatus") + " ] ");
-					}
-				}
-				else {
-					Logger.sysLog(LogValues.error, this.getClass().getName(), "Getting issue with fetching next questiion from"
-							+ "gaining engine, sttaus [ " + nextqueRes.getString("status") + " ]");
+				} else {
+					Logger.sysLog(LogValues.error, this.getClass().getName(),
+							"Getting issue with fetching next questiion from" + "gaining engine, sttaus [ "
+									+ nextqueRes.getString("status") + " ]");
 				}
 			}
 
-		}catch(Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: "+Logger.getStack(e) );
+		} catch (Exception e) {
+			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: " + Logger.getStack(e));
 		}
 
 		return content;
 	}// End Of Method
-	
-	
+
 //	@RequestMapping(value = "/demofetchquestion", method = RequestMethod.GET)
 //	public @ResponseBody String demofetchquestion(@RequestParam(value = "msisdn") String msisdn,
 //			@RequestParam(value = "serviceid") String serviceid,
@@ -3366,91 +3268,89 @@ public class SMSController {
 //	}// End Of Method
 //	
 
-	
 	@RequestMapping(value = "/checkeligibility", method = RequestMethod.GET)
 	public @ResponseBody String checkusereligibility(@RequestParam(value = "msisdn") String msisdn,
 			@RequestParam(value = "serviceid", required = false) String serviceid,
-			@RequestParam(value = "language", required = false) String language,
-			HttpServletRequest request) throws IOException {
+			@RequestParam(value = "language", required = false) String language, HttpServletRequest request)
+			throws IOException {
 
 		String content = "";
 		String cli = CoreUtils.getProperty("callerID");
 
-		Message msg = new Message(cli,msisdn,0,"CheckEligibility", 3,2);
-		
-		if(serviceid != null)
+		Message msg = new Message(cli, msisdn, 0, "CheckEligibility", 3, 2);
+
+		if (serviceid != null)
 			msg.setServiceid(serviceid);
-		
-		if(language != null)
+
+		if (language != null)
 			msg.setLang(language);
-		
+
 		HttpGateway g = new HttpGateway();
 
 		try {
-			
+
 			boolean prevAns = false;
 			boolean quemaxlimit = false;
 			String userEligibleUrl = "";
 			int leftque = 0;
 
-			//checking user eligibility
+			// checking user eligibility
 			userEligibleUrl = CoreUtils.getProperty("User_Eligibility_API");
 
-			if(userEligibleUrl != null  && userEligibleUrl.length() > 0) {
+			if (userEligibleUrl != null && userEligibleUrl.length() > 0) {
 
 				String response = g.sendSyncGETRequest(userEligibleUrl, msg);
-				
+
 				JSONObject eligible_reponse = new JSONObject(response);
-				
-				Logger.sysLog(LogValues.info, this.getClass().getName(), "user [ "+msisdn + " ]" +" Eligibility response "+eligible_reponse );
 
-				/*if (eligible_reponse.getString("status").equalsIgnoreCase("SUCCESS")) {
+				Logger.sysLog(LogValues.info, this.getClass().getName(),
+						"user [ " + msisdn + " ]" + " Eligibility response " + eligible_reponse);
 
-					if (eligible_reponse.getString("isAnswerCorrect").equalsIgnoreCase("YES")) 
-						prevAns = true;
-					else
-						prevAns = false;
+				/*
+				 * if (eligible_reponse.getString("status").equalsIgnoreCase("SUCCESS")) {
+				 * 
+				 * if (eligible_reponse.getString("isAnswerCorrect").equalsIgnoreCase("YES"))
+				 * prevAns = true; else prevAns = false;
+				 * 
+				 * leftque = eligible_reponse.getInt("questionleft");
+				 * 
+				 * if(leftque == 0) //If Reached max limit quemaxlimit = true; } else {
+				 * Logger.sysLog(LogValues.error, this.getClass().getName(),
+				 * "Submit_Ans API hit failed" ); }
+				 */
 
-					leftque = eligible_reponse.getInt("questionleft");
-
-					if(leftque == 0)  //If Reached max limit
-						quemaxlimit = true;
+				if (!prevAns) {
+					String wrongAnsContent = validation.getContent("Wrong_Ans_earlier", language); // if sent wrong ans
+					if (wrongAnsContent != null && wrongAnsContent.length() > 0)
+						content = wrongAnsContent;
+					return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0,
+							0, 0, null, false, null, null, false, null, null, null, 0, false, null, null, null, 0,
+							request);
+				} else if (prevAns) {
+					String correctAns = validation.getContent("correct_ans_msg", language); // if sent correct ans
+					if (correctAns != null && correctAns.length() > 0)
+						content = correctAns;
+					return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0,
+							0, 0, null, false, null, null, false, null, null, null, 0, false, null, null, null, 0,
+							request);
+				} else if (quemaxlimit) {
+					String maxLimitContent = validation.getContent("Max_Limit_Msg", language); // if played max limit
+																								// for today
+					if (maxLimitContent != null && maxLimitContent.length() > 0)
+						content = maxLimitContent;
+					return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null, false, null, 0,
+							0, 0, null, false, null, null, false, null, null, null, 0, false, null, null, null, 0,
+							request);
 				}
-				else {
-					Logger.sysLog(LogValues.error, this.getClass().getName(), "Submit_Ans API hit failed" );
-				}*/
-
-					if(!prevAns) {
-						String wrongAnsContent = validation.getContent("Wrong_Ans_earlier" , language);   // if sent wrong ans
-						if(wrongAnsContent != null  && wrongAnsContent.length() > 0) content = wrongAnsContent;
-						return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-								false, null, 0, 0, 0, null, false, null, null, false,
-								null,null, null, 0, false,null,null,null,0, request);
-					}
-					else if(prevAns) {
-						String correctAns = validation.getContent("correct_ans_msg" , language);   // if sent correct ans
-						if(correctAns != null  && correctAns.length() > 0) content = correctAns;
-						return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-								false, null, 0, 0, 0, null, false, null, null, false,
-								null,null, null, 0, false,null,null,null,0, request);
-					}
-					else if(quemaxlimit) {
-						String maxLimitContent = validation.getContent("Max_Limit_Msg" , language);   // if played max limit for today
-						if(maxLimitContent != null  && maxLimitContent.length() > 0) content = maxLimitContent;
-						return this.addSmsToQueue(cli, msisdn, 0, content, true, false, null, false, null,
-								false, null, 0, 0, 0, null, false, null, null, false,
-								null,null, null, 0, false,null,null,null,0, request);
-					}
 			}
 
-		}catch(Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: "+Logger.getStack(e) );
+		} catch (Exception e) {
+			Logger.sysLog(LogValues.error, this.getClass().getName(), "Exception: " + Logger.getStack(e));
 		}
 
 		return "Failure";
 	}// End Of Method
 
-	
 //	@RequestMapping(value = "/senddemoQuestion", method = RequestMethod.GET )  //Subscribe user and then send question to user ( gaming engine)
 //	public @ResponseBody String senddemoquestion(
 //			@RequestParam(value = "msisdn") String msisdn,
@@ -3542,7 +3442,7 @@ public class SMSController {
 //		return result;
 //		}
 //	
-	
+
 //	@RequestMapping(value = "/QuizQueResponsedemo", method = RequestMethod.GET )    //For gaming engine quiz answer : AWCC Afganistan
 //	public @ResponseBody String quizQueResponsedemo(
 //			@RequestParam(value = "msisdn") String msisdn,
@@ -3797,6 +3697,5 @@ public class SMSController {
 //	}// End Of Method
 //	
 //	
-	
 
 }// End Of Controller

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>SMPP Negative Response Codes</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		
+		<link rel="stylesheet" media="all" type="text/css" href="../promotion/css/main.css" />		
+		
+	</head>
+	<body>			
+		<div id="pageHeader">
+			<div id="bng_logo">
+				<!-- <img src="images/logo.jpg" width="80"> -->
+				<p><font color="black">black</font>N<font color="green">green</font></p>
+			</div>
+			<div id="headingMain">
+				<b>SMS</b>Client
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div id="mainContent">
+			<div id="container" style="width: 760px;">
+				<h1> Negative Response Codes </h1>
+				<table id="nTable">
+					<tr>
+						<th class="heads ecode"> Error Code </th>
+						<th class="heads codes"> Meaning </th>
+						<th class="heads codes"> What to do? </th>
+					</tr>
+					<tr>
+						<td class="center">0x01 <span class="decimal">[1]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVMSGLEN</span>
+							<!-- sm_length parameter -->
+							Invalid Message Length 
+						</td>
+						<td> Share Wireshark traces with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x02 <span class="decimal">[2]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVCMDLEN</span>
+							<!-- command_length in SMPP PDU -->
+							Invalid Command Length
+						</td>
+						<td> Share Wireshark traces with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x03 <span class="decimal">[3]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVCMDID</span>
+							<!-- command_id in SMPP PDU -->
+							Invalid Command ID 
+						</td>
+						<td> Share Wireshark traces with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x04 <span class="decimal">[4]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVBNDSTS</span>
+							Incorrect BIND Mode
+						</td>
+						<td> Open <span class="focus">smsclient.SMSCConfigs</span> table. <br/> Check <span class="focus">'bindMode'</span> from Operator. <br/> 0=TX; 1=RX; 2=TRX </td>
+					</tr>
+					<tr>
+						<td class="center">0x05 <span class="decimal">[5]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RALYBND</span>
+							SMSC already in bound state
+						</td>
+						<td> Restart Tomcat. If problem persists share the logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x06 <span class="decimal">[6]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVPRTFLG</span>
+							<!-- priority_flag parameter -->
+							Invalid Priority Flag 
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x07 <span class="decimal">[7]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVREGDLVFLG</span>
+							<!-- registered_delivery parameter -->
+							Invalid Registered Delivery Flag
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x08 <span class="decimal">[8]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RSYSERR</span>
+							System Configuration error
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x0A <span class="decimal">[10]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVSRCADR</span>
+							Invalid CLI <i>or</i> source address
+						</td>
+						<td> Contact SMSC Team, ask them the correct CLI <i>if required</i> Share Wireshark traces </td>
+					</tr>
+					<tr>
+						<td class="center">0x0B <span class="decimal">[11]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVDSTADR</span>
+							Invalid msisdn <i>or</i> destination address
+						</td>
+						<td> Check msisdn length <i>then</i> Try sending SMS with and without country code and zero </td>
+					</tr>
+					<tr>
+						<td class="center">0x0C <span class="decimal">[12]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVMSGID</span>
+							<!-- error only relevant to query_sm, replace_sm, cancel_sm commands -->
+							Message ID is invalid
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x0D <span class="decimal">[13]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RBINDFAIL</span>
+							Bind failed. Invalid login credentials
+						</td>
+						<td><span class="focus">First Start Wireshark, then restart Tomcat.</span><br/> Share the traces to SMSC Team. Ask them to check the login credentials </td>
+					</tr>
+					<tr>
+						<td class="center">0x0E <span class="decimal">[14]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVPASWD</span>
+							Invalid password
+						</td>
+						<td> Open <span class="focus">smsclient.SMSCConfigs</span> table.<br/>Cross check the <span class="focus">'password'</span> field. <br/> If its correct, Follow the same as <span class="focus">0x0D</span> </td>
+					</tr>
+					<tr>
+						<td class="center">0x0F <span class="decimal">[15]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVSYSID</span>
+							Invalid System ID <i>or</i> User ID
+						</td>
+						<td> Open <span class="focus">smsclient.SMSCConfigs</span> table.<br/>Cross check the <span class="focus">'userid'</span> field. <br/> If its correct, Follow the same as <span class="focus">0x0D</span> </td>
+					</tr>
+					<tr>
+						<td class="center">0x11 <span class="decimal">[17]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RCANCELFAIL</span>
+							cancel_sm request failed
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x13 <span class="decimal">[19]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RREPLACEFAIL</span>
+							replace_sm request failed
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x14 <span class="decimal">[20]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RMSGQFUL</span>
+							Message Queue Full
+						</td>
+						<td> Open <span class="focus">global.sms_properties</span> table. Reduce <span class="focus">TPS</span> to half and restart the Tomcat. <i>If problem persists</i>, share the error with SMSC team </td>
+					</tr>
+					<tr>
+						<td class="center">0x15 <span class="decimal">[21]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVSERTYP</span>
+							Invalid service_type value
+						</td>
+						<td> Share Wireshark traces with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x33 <span class="decimal">[51]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVNUMDESTS</span>
+							Invalid number_of_dests value in submit_multi request
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x34 <span class="decimal">[52]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVDLNAME</span>
+							Invalid distribution list name in submit_multi request
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x40 <span class="decimal">[64]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVDESTFLAG</span>
+							Invalid dest_flag in submit_multi request
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x42 <span class="decimal">[66]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVSUBREP</span>
+							<!-- replace_if_present flag set -->
+							Invalid ‘submit with replace’ request
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x43 <span class="decimal">[67]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVESMCLASS</span>
+							Invalid esm_class field data
+						</td>
+						<td> Share Wireshark traces with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x44 <span class="decimal">[68]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RCNTSUBDL</span>
+							<!-- submit_multi request -->
+							Cannot submit to distribution list
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x45 <span class="decimal">[69]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RSUBMITFAIL</span>
+							Submit message failed
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x48 <span class="decimal">[72]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVSRCTON</span>
+							Invalid Source address TON
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x49 <span class="decimal">[73]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVSRCNPI</span>
+							Invalid Source address NPI
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x50 <span class="decimal">[80]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVDSTTON</span>
+							Invalid Destination address TON
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x51 <span class="decimal">[81]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVDSTNPI</span>
+							Invalid Destination address NPI
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x53 <span class="decimal">[83]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVSYSTYP</span>
+							Invalid system_type field
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x54 <span class="decimal">[84]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVREPFLAG</span>
+							Invalid replace_if_present flag
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x55 <span class="decimal">[85]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVNUMMSGS</span>
+							Invalid number_of_messages parameter
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x58 <span class="decimal">[88]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RTHROTTLED</span>
+							Throttling error
+						</td>
+						<td> Open <span class="focus">global.sms_properties</span> table. Reduce <span class="focus">TPS</span> to half and restart the Tomcat. <i>If problem persists</i>, ask correct TPS from SMSC team </td>
+					</tr>
+					<tr>
+						<td class="center">0x61 <span class="decimal">[97]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVSCHED</span>
+							Invalid schedule_delivery_time parameter
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x62 <span class="decimal">[98]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVEXPIRY</span>
+							Invalid validity_period parameter <i>or</i> Expiry time
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0x63 <span class="decimal">[99]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVDFTMSGID</span>
+							<!-- This error can sometimes occur if the “Default Sender Address” field is blank -->
+							Invalid sm_default_msg_id parameter
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x64 <span class="decimal">[100]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RX_T_APPN</span>
+							ESME Receiver Temporary App Error Code
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x65 <span class="decimal">[101]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RX_P_APPN</span>
+							<!-- The SMPP provider is rejecting the message due to a policy decision or message filter -->
+							ESME Receiver Permanent Error Code
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x66 <span class="decimal">[102]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RX_R_APPN</span>
+							<!-- The SMPP provider is rejecting the message due to a policy decision or message filter -->
+							ESME Receiver Reject Message Error Code
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0x67 <span class="decimal">[103]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RQUERYFAIL</span>
+							query_sm request failed
+						</td>
+						<td> Share Wireshark traces and logs with Development Team </td>
+					</tr>
+					<tr>
+						<td class="center">0xC0 <span class="decimal">[192]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVOPTPARSTREAM</span>
+							Error in the optional TLV parameter encoding
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0xC1 <span class="decimal">[193]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_ROPTPARNOTALLWD</span>
+							An optional TLV parameter was specified which is not allowed
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0xC2 <span class="decimal">[194]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVPARLEN</span>
+							An optional TLV parameter has an invalid parameter length
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0xC3 <span class="decimal">[195]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RMISSINGOPTPARAM</span>
+							An expected optional TLV parameter is missing
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0xC4 <span class="decimal">[196]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RINVOPTPARAMVAL</span>
+							An optional TLV parameter is encoded with an invalid value
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0xFE <span class="decimal">[254]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RDELIVERYFAILURE</span>
+							Generic Message Delivery failure
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">0xFF <span class="decimal">[255]</span> </td>
+						<td>
+							<span class="codeDesc">ESME_RUNKNOWNERR</span>
+							An unknown error occurred. Indicates problems on the SMPP host
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+					<tr>
+						<td class="center">Any Other</td>
+						<td>
+							<span class="codeDesc"></span>
+							Operator Specific Error. Not a Standard Error Code
+						</td>
+						<td> Share the Wireshark traces to SMSC Team. Keep Development team in loop </td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>

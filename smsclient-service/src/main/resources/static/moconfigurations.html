@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Configure MOs</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		
+		<link rel="stylesheet" media="all" type="text/css" href="../promotion/css/main.css" />		
+		<script type="text/javascript" src="../promotion/js/jquery-2.1.4.js"></script>		
+	</head>
+	<body>
+		<script type="text/javascript">
+			
+			$(document).ready(function() {
+				loadCSS();
+				getMOs();
+			});
+	
+			function getMOs()	 {
+	
+				$.ajax({
+					type : 'GET',
+					url : '../getMOsAsJson',
+					encode : true,
+					success : function(response) 	{
+
+						resp_obj = JSON.parse(response);
+						mos_array = resp_obj.mos;
+	
+						var op_string = '';
+						
+						for (i = 0; i < mos_array.length; i++) {
+							
+							op_string += '<tr name="'+ i +'" id="col'+ i +'" > <td>'+ mos_array[i].moId 
+									+'</td> <td> '+  mos_array[i].servicecode
+									+'</td> <td> '+  mos_array[i].keyword
+									+' </td> <td> <button id="sig'+ i +'" class="signal" >&nbsp;</button> </td> </tr>';		
+					
+						}//End Of Loop
+	
+						$('#moTable').append(op_string);
+ 						$('table tr').addClass('rows');
+						$('table td').addClass('values');
+						
+						$('#moTable td').mouseover(function()	{
+							$tr = $(this).parent();
+							$tr.css("font-size", "15px").css("font-weight", "bold");
+						});
+						
+						
+						$('#moTable td').click(function()	{
+							$tr = $(this).parent();
+							
+							var pid = $tr.attr("name");
+							var actionsObj = mos_array[pid].actions;
+							
+							var htmlString = ' <button class="submitButton" onclick="addNewMOAction('+ pid +');" id="addAction">Add</button> <h1>MO Actions</h1> <table id="actions">'; 
+							
+							for( i=0; i<actionsObj.length; i++ )		{
+								htmlString += '<tr> <td class="aid"> <abbr title="Action ID"> '+ actionsObj[i].aid +' </abbr> </td> <td class="type"> <abbr title="MO Type"> '+ actionsObj[i].type +' </abbr> </td> <td class="url"> '+ limitString(actionsObj[i].details, pid, i) +' </td> </tr>'
+							}
+							htmlString += '</table>';
+							$('#display').html(htmlString);						
+							
+							$('.signal').css("background-color", "white");
+							$('#sig'+pid).css("background-color","green");
+							
+						});
+
+						
+						$('#moTable td').mouseout(function()	{
+							$(this).parent().css("font-size", "14px").css("font-weight", "normal");
+						});
+						
+						$('#display').mouseleave(function()	{
+							$p = $('#longAction');
+							$p.hide().html("");
+						});
+						
+					},
+					error : function(xhr, status) {
+						console.log(status);
+					}
+				});
+								
+			}//End Of getPromotions
+			
+
+			function limitString(str, pid, aid) {
+				if(str.length > 75 )		{
+					//onclick="displayText('+ pid +','+ aid +');";
+					return str.substring(0, 70) +' <abbr class="longText" title="Too Long Text...Please check DB" >...!!</abbr>';
+				}else	{
+					return str;
+				}
+			}//End Of Method
+
+			
+			function loadCSS() {
+
+				$('table th').addClass('heads');
+
+			}//End of loadCSS
+			
+			
+			function addNewMOAction(pid)		{
+				$('#newMO').hide();
+				$newAction = $('#newAction');
+				
+				var myObj = mos_array[pid];
+				
+				$inputMoid = $newAction.find('#moid');
+				$inputMoid.val(myObj.moId);
+				$('#moId').val(myObj.moId);
+				
+				$newAction.show();
+			}//End Of addNewMOAction Method
+			
+			
+			function displayText(pid, aid)	{				
+				
+				var actions = mos_array[pid].actions;
+				var text = actions[aid].details;
+				
+				var top = $('#display').offset().top;
+				var left = $('#display').offset().left;
+				
+				console.log(top);
+				$pTag = $('#longAction');
+				$pTag.html(text);
+				$pTag.show();
+				
+			}//End Of displayText Method
+			
+		</script>
+	
+		<div id="pageHeader">
+			<div id="bng_logo">
+				<!-- <img src="images/logo.jpg" width="80"> -->
+				<p><font color="black">black</font>N<font color="green">green</font></p>
+			</div>
+			<div id="headingMain">
+				<b>SMS</b>Client
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div id="mainContent">
+			<div id="content">
+				<div id="container" class="moContainer" >
+					<h1> Mobile Originating&nbsp;(MO) Messages </h1>
+					<table id="moTable">
+						<tr>
+							<th>MO Id.</th>
+							<th>Service Code</th>
+							<th>MO Keyword</th>
+							<th class="hidden">signal</th>	
+						</tr>
+					</table>
+				</div>
+			</div>
+			<div id="formContainer">
+				<div id="newMO">
+					<h2>Add New MO Message</h2>
+					<form id="addMOForm" class="displayForm" method="POST" action="/SMSClient/addMO">
+						<table class="inner-table">
+							<tr>
+								<td class="f-name">Action</td>
+								<td class="f-name"></td>
+							</tr>
+							<tr>
+								<td colspan=2 style="text-align: left;">
+									<textarea name="action" class="textarea_input" required ></textarea>
+								</td>
+							</tr>
+							<tr>
+								<td class="f-name">Short Code</td>
+								<td>
+									<input name="shcode" type="text" class="inputType" required />
+								</td>
+							</tr>
+							<tr>
+								<td class="f-name">MO Keyword</td>
+								<td>
+									<input name="keyword" type="text" class="inputType" required />
+								</td>
+							</tr>
+							<tr>
+								<td class="f-name">Type</td>
+								<td>
+									<input name="type" type="text" class="inputType" value="GET" required />
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2" class="center">
+									<hr class="hrLine" />
+									<input type="submit" value="Add" name="add" class="submitButton center"/>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+				<div id="newAction">
+					<h2>Add MO Action</h2>
+					<form id="addActionForm" class="displayForm" method="POST" action="/SMSClient/addMOAction">
+						<table class="inner-table">
+							<tr>
+								<td class="f-name">Action</td>
+								<td class="f-name"></td>
+							</tr>
+							<tr>
+								<td colspan=2 style="text-align: left;">
+									<textarea name="action" class="textarea_input" required ></textarea>
+								</td>
+							</tr>
+							<tr>
+								<td class="f-name">MO ID</td>
+								<td>
+									<input id="moid" type="text" class="inputType" disabled />
+									<input id="moId" name="moid" type="hidden" class="inputType" />
+								</td>
+							</tr>
+							<tr>
+								<td class="f-name">Type</td>
+								<td>
+									<input name="type" type="text" class="inputType" value="GET" required />
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2" class="center">
+									<hr class="hrLine" />
+									<input type="submit" value="Add" name="add" class="submitButton center"/>
+								</td>
+							</tr>
+						</table>
+					</form>					
+				</div>
+			</div>
+			<div class="clear"></div>
+			<div id="display">
+				<h1>MO Actions</h1>
+			</div>
+			<p id="longAction" class="hidden">  </p>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>SMSC Connections</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<meta http-equiv="refresh" content="60">
+		
+		<link rel="stylesheet" media="all" type="text/css" href="../promotion/css/main.css" />		
+		<script type="text/javascript" src="../promotion/js/jquery-2.1.4.js"></script>		
+	</head>
+	<body>
+		<script type="text/javascript">
+			
+			$(document).ready(function() {
+				loadCSS();
+				getConnections();
+			});
+	
+			function getConnections()	 {
+	
+				$.ajax({
+					type : 'GET',
+					url : '../getConnectionsAsJson',
+					encode : true,
+					success : function(response) 	{
+						console.log(response);
+						resp_obj = JSON.parse(response);
+						circles_array = resp_obj.circles;
+	
+						var op_string = '';
+						
+						for (i = 0; i < circles_array.length; i++) {
+							op_string += '<tr> <td>'+ circles_array[i].name 
+									+'</td> <td> '+  circles_array[i].detail;		
+									
+							if( circles_array[i].status == "Success" )			{		
+								op_string += '</td> <td> <font color="green"> '+  circles_array[i].status +'</font> </td> <td> --- </td> </tr>';
+							}else	{
+								op_string += '</td> <td> <font color="red"> '+  circles_array[i].status 
+								+'</font> </td> <td> <a href="/SMSClient/connect?circle='+ circles_array[i].name +'">Connect</a> </td> </tr>';
+							}
+							
+						}//End Of Loop
+	
+						$('#cTable').append(op_string);
+						$('table tr').addClass('rows');
+						$('table td').addClass('values');
+						
+						$('td').mouseover(function()	{
+							$(this).parent().css("font-size", "15px").css("font-weight", "bold");
+						});
+						
+						$('td').mouseout(function()	{
+							$(this).parent().css("font-size", "14px").css("font-weight", "normal");
+						});
+						
+						console.log(op_string);
+					},
+					error : function(xhr, status) {
+						console.log(status);
+					}
+				});
+								
+			}//End Of getPromotions
+			
+			function loadCSS()		{
+				
+				$('table th').addClass('heads');
+				
+			}//End of loadCSS
+		</script>
+	
+		<div id="pageHeader">
+			<div id="bng_logo">
+				<!-- <img src="images/logo.jpg" width="80"> -->
+				<p><font color="black">black</font>N<font color="green">green</font></p>
+			</div>
+			<div id="headingMain">
+				<b>SMS</b>Client
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div id="mainContent">
+			<div id="container">
+				<h1> SMSC Connections </h1>
+				<table id="cTable">
+					<tr>
+						<th>Circle</th>
+						<th>Details</th>
+						<th>Status</th>
+						<th>Action</th> 
+					</tr>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>
