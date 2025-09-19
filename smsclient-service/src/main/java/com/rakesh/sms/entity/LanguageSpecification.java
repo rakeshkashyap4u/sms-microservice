@@ -1,28 +1,30 @@
 package com.rakesh.sms.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "LanguageSpecification")
 public class LanguageSpecification {
 
 	@Id
-	@GeneratedValue
+	 @GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "lid", unique = true, nullable = false)
 	private Integer lid;
 
 	@Column(name = "language", unique = true, nullable = false)
 	private String language;
 
+	
 	@Column(name = "dataCoding", unique = false, nullable = false)
 	private Integer dataCoding;
 
@@ -55,9 +57,10 @@ public class LanguageSpecification {
 		return dataCoding;
 	}
 
-	public byte getDataCodingValue() {
-		return dataCoding.byteValue();
+	public Byte getDataCodingValue() {
+	    return dataCoding != null ? dataCoding.byteValue() : null;
 	}
+
 
 	public void setDataCoding(Integer dataCoding) {
 		this.dataCoding = dataCoding;

@@ -42,6 +42,8 @@ public class ConfigController {
 	public void setDetails(SMSCDetailsBo details) {
 		this.detail = details;
 	}
+	
+	
 
 	@Autowired
 	SMSCConfigurationBo configuration;

@@ -45,12 +45,17 @@ public class AlertsDaoImpl implements AlertsDao {
 	 private final ActiveAlertsRepository activeAlterrepo;
 	 
 	 private final AlertsContentRepository alertContentrepo;
+	 
+	 private final AlertsContentRepository repository;
+
+	    
 	   
 
-	 public AlertsDaoImpl(SmsSubscriptionRepository repo,ActiveAlertsRepository activeAlterrepo,AlertsContentRepository alertContentrepo) {
+	 public AlertsDaoImpl(SmsSubscriptionRepository repo,ActiveAlertsRepository activeAlterrepo,AlertsContentRepository alertContentrepo,AlertsContentRepository repository) {
 	        this.repo = repo;
 	        this.activeAlterrepo=activeAlterrepo;
 	        this.alertContentrepo=alertContentrepo;
+	        this.repository=repository;
 	    }
 
     @Transactional
@@ -543,55 +548,67 @@ public class AlertsDaoImpl implements AlertsDao {
 	/**
 	 * Not Transactional :: Bulk Insert
 	 */
-	public boolean uploadAlertContent(List<AlertsContent> contents) {
-
-		SessionFactory factory = DBConnection.getSessionFactory("0");
-		boolean status = false;
-
-		try {
-
-			Session session = factory.openSession();
-			Transaction trans = session.beginTransaction();
-			int i = 0;
-
-			Logger.sysLog(LogValues.info, this.getClass().getName(),
-					" Upload Content | Adding " + contents.size() + " entries... ");
-
-			try {
-
-				for (i = 0; i < contents.size(); i++) {
-					AlertsContent content = contents.get(i);
-					session.save(content);
-					session.flush();
-					session.clear();
-				} // End Of Loop
-
-				status = true;
-
-			} catch (SecurityException ie) {
-				Logger.sysLog(LogValues.warn, this.getClass().getName(),
-						" Upload Alert Content, Bulk Insert Interrupted  |  " + i + " Entries Inserted ");
-			} catch (Exception e) {
-				Logger.sysLog(LogValues.error, this.getClass().getName(),
-						" Upload Alert Content, Bulk Insert ERROR [1]---\n" + Logger.getStack(e));
-			} finally {
-				trans.commit();
-				session.close();
-				Logger.sysLog(LogValues.debug, this.getClass().getName(),
-						" Upload Content | Bulk Insert session successfully closed. ");
-			} // End Of Inner Try Catch
-
-		} catch (CannotCreateTransactionException ccte) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(),
-					" Upload Content | Bulk Insert | CANNOT CREATE MYSQL Transaction | Please contact DEVELOPMENT Team URGENTLY ");
-		} catch (Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(),
-					" Upload Alert Content, Bulk Insert ERROR [2]---\n" + Logger.getStack(e));
-		} // End Of Try Catch
-
-		return status;
-
-	}// End Of Method
+//	public boolean uploadAlertContent(List<AlertsContent> contents) {
+//
+//		SessionFactory factory = DBConnection.getSessionFactory("0");
+//		boolean status = false;
+//
+//		try {
+//
+//			Session session = factory.openSession();
+//			Transaction trans = session.beginTransaction();
+//			int i = 0;
+//
+//			Logger.sysLog(LogValues.info, this.getClass().getName(),
+//					" Upload Content | Adding " + contents.size() + " entries... ");
+//
+//			try {
+//
+//				for (i = 0; i < contents.size(); i++) {
+//					AlertsContent content = contents.get(i);
+//					session.save(content);
+//					session.flush();
+//					session.clear();
+//				} // End Of Loop
+//
+//				status = true;
+//
+//			} catch (SecurityException ie) {
+//				Logger.sysLog(LogValues.warn, this.getClass().getName(),
+//						" Upload Alert Content, Bulk Insert Interrupted  |  " + i + " Entries Inserted ");
+//			} catch (Exception e) {
+//				Logger.sysLog(LogValues.error, this.getClass().getName(),
+//						" Upload Alert Content, Bulk Insert ERROR [1]---\n" + Logger.getStack(e));
+//			} finally {
+//				trans.commit();
+//				session.close();
+//				Logger.sysLog(LogValues.debug, this.getClass().getName(),
+//						" Upload Content | Bulk Insert session successfully closed. ");
+//			} // End Of Inner Try Catch
+//
+//		} catch (CannotCreateTransactionException ccte) {
+//			Logger.sysLog(LogValues.error, this.getClass().getName(),
+//					" Upload Content | Bulk Insert | CANNOT CREATE MYSQL Transaction | Please contact DEVELOPMENT Team URGENTLY ");
+//		} catch (Exception e) {
+//			Logger.sysLog(LogValues.error, this.getClass().getName(),
+//					" Upload Alert Content, Bulk Insert ERROR [2]---\n" + Logger.getStack(e));
+//		} // End Of Try Catch
+//
+//		return status;
+//
+//	}// End Of Method
+	
+	
+	 @Transactional
+	    public boolean uploadAlertContent(List<AlertsContent> contents) {
+	        try {
+	            repository.saveAll(contents);  // Bulk insert
+	            return true;
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            return false;
+	        }
+	    }
 
 	@Transactional
 	public List<AlertServiceDetails> getServicesWithSMSContent() {

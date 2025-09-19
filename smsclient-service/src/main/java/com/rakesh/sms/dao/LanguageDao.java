@@ -8,7 +8,7 @@ public interface LanguageDao {
 
 	public List<LanguageSpecification> getLanguages();
 
-	public boolean addLanguage(LanguageSpecification language);
+	public LanguageSpecification addLanguage(LanguageSpecification language);
 
 	public String editLanguage(LanguageSpecification language);
 

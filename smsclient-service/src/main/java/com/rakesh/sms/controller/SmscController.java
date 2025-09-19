@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jsmpp.session.SMPPSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.rakesh.sms.beans.SMSC;
 import com.rakesh.sms.bo.GatewayBo;
@@ -17,16 +19,23 @@ import com.rakesh.sms.main.Pusher;
 import com.rakesh.sms.main.ReConnector;
 import com.rakesh.sms.queue.QueueManager;
 import com.rakesh.sms.entity.SMSCConfigs;
+import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
 
-@Controller
+@RestController
+
 public class SmscController {
 
 	private static final Long START_TIMEOUT = 1200L, WAIT_TIMEOUT = 15000L;
 	private static List<SMSCConfigs> CircleConfigs;
-	private static GatewayBo smscGatewayBo;
+	private  GatewayBo smscGatewayBo;
 	private static List<String> Circles;
+	
+	@Autowired
+    public SmscController(GatewayBo smscGatewayBo) {
+        this.smscGatewayBo = smscGatewayBo;
+    }
 	
 
 	public SmscController() {
@@ -49,8 +58,11 @@ public class SmscController {
 		SMSC smsc = smscList.get(circle);
 
 		if (smsc != null) {
+			
+			
 
 			ESME esme = smsc.getSmppGateway();
+			
 
 			if (esme != null) {
 				SMPPSession esmeSession = esme.getSmppSession();
@@ -130,7 +142,7 @@ public class SmscController {
 
 		} else {
 
-			circles = SmscController.smscGatewayBo.getAllCircleNames();
+			circles = smscGatewayBo.getAllCircleNames();
 
 			for (int i = 0; i < circles.size(); i++) {
 
@@ -263,7 +275,7 @@ public class SmscController {
 	public @ResponseBody String fetchCirclesAsJson() {
 
 		if (SmscController.Circles == null) {
-			SmscController.Circles = SmscController.smscGatewayBo.getTXCircleNames();
+			SmscController.Circles = smscGatewayBo.getTXCircleNames();
 		}
 
 		StringBuffer buffer = new StringBuffer("{\"circles\": [");
@@ -283,17 +295,18 @@ public class SmscController {
 
 		if (SmscController.CircleConfigs == null) 
 		{
-			SmscController.CircleConfigs = SmscController.smscGatewayBo.getAllCircleDetails();
+			SmscController.CircleConfigs = smscGatewayBo.getAllCircleDetails();
 		}
 		
 	
 		
-		
+		System.out.println();
 
 		StringBuffer buffer = new StringBuffer("{\"circles\": [");
 
 		for (int i = 0; i < CircleConfigs.size(); i++) {
 			SMSCConfigs config = CircleConfigs.get(i);
+			System.out.println("config.getServiceUri()"+config.getServiceUri());
 			
 			if(config.getServiceUri()== null || config.getServiceUri().equals("") )
 			{

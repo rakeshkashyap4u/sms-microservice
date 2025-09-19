@@ -109,6 +109,9 @@ import redis.clients.jedis.Jedis;
  * the protocol
  */
 
+
+
+
 @RestController
 public class SMSController {
 
@@ -1337,6 +1340,8 @@ public class SMSController {
 			HttpServletRequest request, HttpServletResponse resp) {
 
 		String result;
+		
+		 System.out.println("here u are..");
 
 		if (moid != null && action.trim().length() > 0 && type.trim().length() > 0) {
 
@@ -1347,7 +1352,7 @@ public class SMSController {
 				moaction.setDetails(action.trim());
 				moaction.setType(type.trim());
 				moaction.setMoId(moId);
-
+				 System.out.println("claling addMOAction");
 				SMSController.validation.addMOAction(moaction);
 				result = " MO Action Successfully added to DB...";
 			} catch (Exception e) {

@@ -3,6 +3,8 @@ package com.rakesh.sms.util;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.rakesh.sms.dao.LanguageDao;
@@ -14,8 +16,14 @@ import com.rakesh.sms.entity.SMSCConfigs;
 @Service
 public class LanguageUtility {
 
-	@Autowired
+	
 	public LanguageDao languagedao;
+	
+	@Autowired
+	public LanguageUtility(LanguageDao languagedao)
+	{
+		this.languagedao=languagedao;
+	}
 
 	public static List<LanguageSpecification> LanguageList;
 	public static String language;
@@ -82,19 +90,31 @@ public class LanguageUtility {
 	}
 
 	public int addLanguage(LanguageSpecification language) {
-		if (LanguageList != null) {
-			for (Iterator<LanguageSpecification> iter = LanguageList.iterator(); iter.hasNext();) {
-				LanguageSpecification obj = iter.next();
-				if (language.getLanguage().equals(obj.getLanguage()))
-					return -1;
-			}
+		
+		LanguageList = languagedao.getLanguages();
+		System.out.println("LanguageList size: " + (LanguageList != null ? LanguageList.size() : "null"));
+		System.out.println("LanguageList");
+	    if (LanguageList != null) {
+	    	for (LanguageSpecification obj : LanguageList) {
+	    	    if (Objects.equals(language.getLanguage(), obj.getLanguage())) { // handles nulls
+	    	        return -1; // duplicate language
+	    	    }
+	    	}
 
-			LanguageList.add(language);
-			boolean statusAdd = languagedao.addLanguage(language);
-		}
-		return language.getLid();
 
+	        // Persist and get the managed entity with ID
+	        LanguageSpecification saved = languagedao.addLanguage(language);
+	        LanguageList.add(saved);
+	        System.out.println("LanguageList "+LanguageList);
+
+	        return saved.getLid(); // ✅ now it's not null
+	    }
+	    
+	    System.out.println("LanguageList is "+LanguageList);
+
+	    return -1; // or throw exception if LanguageList is unexpectedly null
 	}
+
 
 	public String editLanguage(LanguageSpecification language) {
 		if (language != null) {

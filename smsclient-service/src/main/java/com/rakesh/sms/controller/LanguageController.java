@@ -2,8 +2,8 @@ package com.rakesh.sms.controller;
 
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,13 +13,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 import com.rakesh.sms.dao.LanguageDao;
 import com.rakesh.sms.entity.LanguageSpecification;
 import com.rakesh.sms.util.LanguageUtility;
 
-@Controller
+
+@RestController
 public class LanguageController {
 
 	@Autowired
@@ -81,14 +85,14 @@ public class LanguageController {
 	 */
 
 	@RequestMapping(value = "/languages")
-	public String displayLanguages(ModelMap model) {
+	public List<LanguageSpecification>  displayLanguages(ModelMap model) {
 
 		List<LanguageSpecification> languagelist = util.getLanguages();
 
 		if (languagelist != null && languagelist.size() > 0)
 			model.addAttribute("languageList", languagelist);
 
-		return "Languages";
+		return languagelist;
 	}// End Of Mapping
 
 	@RequestMapping(value = "/languageInfo", method = RequestMethod.GET)
@@ -141,12 +145,13 @@ public class LanguageController {
 	}
 
 	@RequestMapping(value = "/addLanguage", method = RequestMethod.POST)
-	public void add(@ModelAttribute("language") LanguageSpecification lang, ModelMap model, HttpServletResponse resp) {
-		/*
-		 * System.out.print("Recieved" + lang.getLanguage()+ lang.getDataCodingValue()+
-		 * lang.getServiceType()+ lang.getScript() + lang.getEncoding());
-		 */
-		List<LanguageSpecification> languageList = util.getLanguages();
+	public String  add(@RequestBody LanguageSpecification lang, HttpServletResponse resp) {
+		
+		 System.out.print("Recieved" + lang.getLanguage()+ lang.getDataCoding()+
+		 lang.getServiceType()+ lang.getScript() + lang.getEncoding());
+		 
+		//List<LanguageSpecification> languageList = util.getLanguages();
+		
 		LanguageSpecification language = new LanguageSpecification();
 		language.setLanguage(lang.getLanguage());
 		language.setDataCoding(lang.getDataCoding());
@@ -155,11 +160,16 @@ public class LanguageController {
 		language.setServiceType(lang.getServiceType());
 
 		int status = util.addLanguage(language);
+		
+		System.out.println("status ="+status);
 
-		if (languageList != null && languageList.size() > 0) {
-			model.addAttribute("LanguageList", languageList);
-		}
-		resp.setHeader("Refresh", "1;url=./languages");
+//		if (languageList != null && languageList.size() > 0) {
+//			model.addAttribute("LanguageList", languageList);
+//		}
+//		resp.setHeader("Refresh", "1;url=./languages");
+//		int status = util.addLanguage(language);
+
+	    return status > 0 ? "success" : "failure";
 
 	}
 

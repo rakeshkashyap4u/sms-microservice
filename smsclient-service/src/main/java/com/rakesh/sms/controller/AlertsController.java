@@ -10,7 +10,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -447,6 +447,8 @@ public class AlertsController {
 	@RequestMapping(value = "/uploadAlertContent", method = RequestMethod.POST, headers = "Content-Type=multipart/form-data")
 	public @ResponseBody String uploadAlertContent(HttpServletResponse response,
 			@RequestParam("alertcontent[]") MultipartFile file) {
+		
+		System.out.println("got hit .........................");
 
 		String status = "Failure";
 

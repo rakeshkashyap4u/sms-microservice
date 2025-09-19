@@ -7,6 +7,7 @@ import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import com.rakesh.sms.dao.LanguageDao;
 import com.rakesh.sms.entity.LanguageSpecification;
 import com.rakesh.sms.jpas.LanguageSpecificationRepository;
@@ -22,7 +23,7 @@ public class LanguageDaoImpl implements LanguageDao {
         this.languageRepo = languageRepo;
     }
 
-    @Override
+    @Transactional
     public List<LanguageSpecification> getLanguages() {
         try {
             return languageRepo.findAllByOrderByLidAsc();
@@ -32,18 +33,12 @@ public class LanguageDaoImpl implements LanguageDao {
         }
     }
 
-	public boolean addLanguage(LanguageSpecification language) {
-
-		try {
-			Session session = DBConnection.getSessionFactory("0").getCurrentSession();
-			session.saveOrUpdate(language);
-
-			return true;
-		} catch (Exception e) {
-
-			return false;
-		} // End Of Try-Catch
-	}// End Of Method
+    @Transactional
+    public LanguageSpecification addLanguage(LanguageSpecification language) {
+        
+        System.out.println("saving now.."+language);
+        return languageRepo.save(language);
+    }
 
 	public String editLanguage(LanguageSpecification language) {
 

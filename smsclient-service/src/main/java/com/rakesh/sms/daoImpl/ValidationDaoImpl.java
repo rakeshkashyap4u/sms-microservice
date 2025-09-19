@@ -69,12 +69,13 @@ public class ValidationDaoImpl implements ValidationDao {
 
 		try {
 
-			Session session = DBConnection.getSessionFactory("0").getCurrentSession();
-			int moId = (Integer) session.save(format);
+			
+			MessageFormats savedFormat = messageFormatsRepo.save(format);
+			int moId = savedFormat.getId();
 
 			if (moId > 0) {
 				action.setMoId(moId);
-				session.save(action);
+				//session.save(action);
 			} else {
 				Logger.sysLog(LogValues.warn, this.getClass().getName(), " Unable to add MO ");
 				moId = -1;
@@ -207,8 +208,11 @@ public class ValidationDaoImpl implements ValidationDao {
 
 		try {
 
-			Session session = DBConnection.getSessionFactory("0").getCurrentSession();
-			int aid = (Integer) session.save(action);
+			
+			
+			 MessageActions savedFormat =  messageFormatsRepo1.save(action);
+				int aid = savedFormat.getAid();
+				System.out.println("get aid="+aid);
 
 			if (aid < 0) {
 				Logger.sysLog(LogValues.warn, this.getClass().getName(), " Unable to add MO ");
