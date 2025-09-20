@@ -135,7 +135,17 @@ public class CoreUtils {
 	public static String token2;
 
 	static {
-		CoreUtils.eGSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		
+		 CoreUtils.eGSON = new GsonBuilder()
+			        .excludeFieldsWithoutExposeAnnotation()
+			        .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")  // ✅ match Jackson @JsonFormat
+			        .create();
+
+			    CoreUtils.GSON = new GsonBuilder()
+			        .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")  // ✅ match Jackson @JsonFormat
+			        .create();
+			    
+		//CoreUtils.eGSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		CoreUtils.SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		CoreUtils.moFailureNotification = null;
 		CoreUtils.DefaultHttpGateway = null;

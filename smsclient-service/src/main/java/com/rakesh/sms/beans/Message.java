@@ -3,6 +3,7 @@ package com.rakesh.sms.beans;
 import java.util.Date;
 
 import com.rakesh.sms.entity.LanguageSpecification;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.gson.annotations.Expose;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.CoreUtils;
@@ -39,6 +40,7 @@ public class Message {
 	@Expose
 	private String extraDetail;
 	@Expose
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "Asia/Kolkata")
 	private Date expiryTime;
 	@Expose
 	private byte dataCoding;

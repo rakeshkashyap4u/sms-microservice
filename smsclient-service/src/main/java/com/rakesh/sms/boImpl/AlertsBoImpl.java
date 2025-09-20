@@ -18,7 +18,8 @@ import com.rakesh.sms.entity.SmsSubscription;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
 
-@Service
+
+@Service("alertsBo")  
 public class AlertsBoImpl implements AlertsBo {
 
 	@Autowired

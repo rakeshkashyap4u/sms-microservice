@@ -18,10 +18,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.rakesh.sms.beans.AlertServiceDetails;
 import com.rakesh.sms.beans.Message;
+import com.rakesh.sms.beans.PromotionDTO;
 import com.rakesh.sms.bo.AlertsBo;
 import com.rakesh.sms.main.Pusher;
 import com.rakesh.sms.entity.ActiveAlerts;
@@ -35,8 +37,10 @@ import com.rakesh.sms.util.CoreUtils;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
 
-@Controller
+@RestController
 public class AlertsController {
+	
+	
 
 	@Autowired
 	private AlertsBo subsBo;
@@ -292,7 +296,7 @@ public class AlertsController {
 
 	}// End Of Request Mapping
 
-	@RequestMapping(value = "/showPromotions", method = RequestMethod.GET)
+	@RequestMapping(value = "/showPromotion1", method = RequestMethod.GET)
 	public @ResponseBody String showRunningPromotions() {
 
 		List<Promotions> promos = StartScheduler.getLivePromotions();
@@ -308,12 +312,43 @@ public class AlertsController {
 						+ "\"},");
 			}
 		} // End Of Loop
+		
+		
 
 		buffer.deleteCharAt(buffer.length() - 1);
 		buffer.append("]}");
 		promos.clear();
 		return buffer.toString();
 	}// End Of Request Mapping
+	
+	
+	@RequestMapping(value = "/showPromotions", method = RequestMethod.GET)
+	public @ResponseBody List<PromotionDTO> showRunningPromotions1() {
+		
+		System.out.println("here called..");
+
+	    List<Promotions> promos = StartScheduler.getLivePromotions();
+	    System.out.println("promos ="+promos);
+	    List<PromotionDTO> result = new ArrayList<>();
+
+	    for (Promotions promo : promos) {
+	        if (promo.getId() != -1) {
+	            String starttime = promo.getStartTime();
+	            starttime = starttime.substring(0, starttime.length() - 4);
+
+	            result.add(new PromotionDTO(
+	                promo.getName(),
+	                String.valueOf(promo.getId()),
+	                String.valueOf(promo.getPushCount()),
+	                starttime,
+	                promo.isPaused()
+	            ));
+	        }
+	    }
+
+	    promos.clear();
+	    return result;  // 👈 Spring will auto-convert to JSON array
+	}
 
 	@RequestMapping(value = "/stopPromotion", method = RequestMethod.GET)
 	public @ResponseBody String stopThisPromotion(@RequestParam("pid") Integer pid, HttpServletResponse resp) {
@@ -330,7 +365,7 @@ public class AlertsController {
 			}
 		} // End Of Loop
 
-		resp.setHeader("Refresh", "5;url=/SMSClient/");
+	//	resp.setHeader("Refresh", "5;url=/SMSClient/");
 		promos.clear();
 		return response;
 	}// End Of Request Mapping

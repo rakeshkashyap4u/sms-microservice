@@ -5,10 +5,12 @@ import java.io.StringReader;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 
@@ -32,6 +34,7 @@ import org.xml.sax.SAXException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rakesh.sms.beans.Header;
 import com.rakesh.sms.beans.Message;
 import com.rakesh.sms.beans.RequestFormat;
@@ -112,9 +115,12 @@ public class Pusher extends Thread {
 	}
 	
 	@JmsListener(destination = "smsqueue1", concurrency = "5-10")
+	@JmsListener(destination = "smsqueue2", concurrency = "5-10")
+	@JmsListener(destination = "smsqueue3", concurrency = "5-10")
 	public void receiveMessage(String json) throws InterruptedException, JsonMappingException, JsonProcessingException {
 	    // Update circle info
 		ObjectMapper mapper = new ObjectMapper();
+		
 	    Message msg = mapper.readValue(json, Message.class);
 		if (msg == null) {
             // No message available, short sleep to avoid CPU spin

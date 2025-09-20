@@ -1047,6 +1047,8 @@ public class SMSController {
 		SmsPromotion promotion = null;
 		String reason = "", temp;
 		boolean response = false;
+		
+		System.out.println("expiryDate------------------"+expiryDate);
 
 		if (circle != null && circle.trim().equalsIgnoreCase("default")) {
 			circle = Pusher.getDefaultCircle();

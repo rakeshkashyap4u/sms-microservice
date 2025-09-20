@@ -3,6 +3,7 @@ package com.rakesh.sms.queue;
 import java.sql.Date;
 import java.util.Enumeration;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.jms.DeliveryMode;
 import jakarta.jms.Destination;
 import jakarta.jms.IllegalStateException;
@@ -16,12 +17,14 @@ import jakarta.jms.TextMessage;
 import org.apache.activemq.ScheduledMessage;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.rakesh.sms.beans.Message;
 import com.rakesh.sms.util.CoreEnums;
 import com.rakesh.sms.util.LogValues;
 import com.rakesh.sms.util.Logger;
 
+@Service
 public class SmsQueue {
 
 //	private static Long[] newMessageCount = new Long[3];
@@ -39,7 +42,13 @@ public class SmsQueue {
 		
 	}
 
+	  @PostConstruct
+	    public void initQueue() {
+	        SmsQueue.init(simpleActiveMQConnection.getSession());
+	    }
+	
 	public static void init(Session session) {
+		 
 	    if (session == null) {
 	        Logger.sysLog(LogValues.error, SmsQueue.class.getName(), "Cannot initialize SmsQueue: JMS session is null");
 	        return;

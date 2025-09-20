@@ -30,6 +30,7 @@ import com.rakesh.sms.entity.AlertLogs;
 import com.rakesh.sms.entity.AlertsContent;
 import com.rakesh.sms.entity.SmsSubscription;
 import com.rakesh.sms.jpas.ActiveAlertsRepository;
+import com.rakesh.sms.jpas.AlertLogsRepository;
 import com.rakesh.sms.jpas.AlertsContentRepository;
 import com.rakesh.sms.jpas.SmsSubscriptionRepository;
 import com.rakesh.sms.util.CoreEnums;
@@ -49,13 +50,16 @@ public class AlertsDaoImpl implements AlertsDao {
 	 private final AlertsContentRepository repository;
 
 	    
-	   
+	 private final AlertLogsRepository alertLogsRepository;
 
-	 public AlertsDaoImpl(SmsSubscriptionRepository repo,ActiveAlertsRepository activeAlterrepo,AlertsContentRepository alertContentrepo,AlertsContentRepository repository) {
+	   
+	 public AlertsDaoImpl(SmsSubscriptionRepository repo,ActiveAlertsRepository activeAlterrepo,AlertsContentRepository alertContentrepo,AlertsContentRepository repository
+			 ,AlertLogsRepository alertLogsRepository) {
 	        this.repo = repo;
 	        this.activeAlterrepo=activeAlterrepo;
 	        this.alertContentrepo=alertContentrepo;
 	        this.repository=repository;
+	        this.alertLogsRepository=alertLogsRepository;
 	    }
 
     @Transactional
@@ -432,31 +436,26 @@ public class AlertsDaoImpl implements AlertsDao {
 	}
 
 
-	@Transactional
-	public int addPromotionLog(SmsPromotion details) {
+	 @Transactional
+	    public int addPromotionLog(SmsPromotion details) {
+	        try {
+	            AlertLogs log = new AlertLogs();
+	            log.setName(details.getJobName());
+	            log.setCli(details.getCallerId());
+	            log.setCircle(details.getCircle());
+	            log.setStatus(details.getStatus());
+	            log.setBaseSize(details.baseSize());
+	            log.setExpiresAt(details.getExpiry());
+	            log.setTimestamp(details.getTimestamp());
 
-		Session session = DBConnection.getSessionFactory("0").getCurrentSession();
+	            AlertLogs savedLog = alertLogsRepository.save(log);
+	            return savedLog.getPid();
 
-		try {
-
-			AlertLogs log = new AlertLogs();
-			log.setName(details.getJobName());
-			log.setCli(details.getCallerId());
-			log.setCircle(details.getCircle());
-			log.setStatus(details.getStatus());
-			log.setBaseSize(details.baseSize());
-			log.setExpiresAt(details.getExpiry());
-			log.setTimestamp(details.getTimestamp());
-
-			Integer pid = (Integer) session.save(log);
-			return pid.intValue();
-
-		} catch (Exception e) {
-			Logger.sysLog(LogValues.error, this.getClass().getName(), Logger.getStack(e));
-		}
-
-		return -1;
-	}// End Of Method
+	        } catch (Exception e) {
+	            Logger.sysLog(LogValues.error, this.getClass().getName(), Logger.getStack(e));
+	            return -1;
+	        }
+	    }
 
 	@Transactional
 	public void updateFlag(String msisdn, String serviceid, String subserviceid, String flag) {

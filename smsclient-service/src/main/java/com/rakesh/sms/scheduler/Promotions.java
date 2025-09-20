@@ -147,37 +147,7 @@ public class Promotions implements JobScheduler {
 							sms.setEncoding("true");
 						} // End Of Language Check
 						
-						//Burkina Faso
-						if(CoreUtils.getProperty("country").equalsIgnoreCase("bfa"))
-						{
-							if(sms.getCli().equals("399") || sms.getCli().equals("226399")) {
-								if(CoreUtils.token1 == null) 
-								{
-									CoreUtils.generateAndSaveToken();
-									sms.setToken(CoreUtils.token1);
-									sms.setSenderName("Islamic");
-								} 
-								else 
-								{
-									sms.setToken(CoreUtils.token1);
-									sms.setSenderName("Islamic");									
-								}
-							} 
-							else if(sms.getCli().equals("145") || sms.getCli().equals("226145")) 
-							{
-								if(CoreUtils.token2 == null)
-								{
-									CoreUtils.generateAndSaveToken();
-									sms.setToken(CoreUtils.token2);
-									sms.setSenderName("MagicVoice");
-								}
-								else 
-								{
-									sms.setToken(CoreUtils.token2);
-									sms.setSenderName("MagicVoice");
-								}
-							}
-						}
+						
 
 						queue.push(sms);
 						chunkCount++;
