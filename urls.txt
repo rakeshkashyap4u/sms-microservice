@@ -1,0 +1,7 @@
+http://localhost:8080/sendSms?msisdn=9876543210&content=HelloWorld&cli=1234&priority=1&serviceType=2&sync=false&delay=5000&msgid=MSG123&circle=PRO
+
+http://localhost:8080/receiveMO?msisdn=9876543210&message=ACT&serviceType=2&msgid=MSG123&cli=1080&circlr=PRO
+
+http://localhost:8085/smsgateway/sendsms
+
+ http://localhost:8081/sub-service/subscription?msisdn=9876543210&subServiceId=NWWeekly&channel=SMS&language=EN&serviceId=News&cpId=999&autoRenew=true 
